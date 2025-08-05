@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 00:47:12
+ * @LastEditTime: 2025-08-06 01:32:56
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
@@ -125,9 +125,11 @@ class ImagesCarousel : public QWidget {
 
   private slots:
     void _unfocusCurrImage();
+    void _onScrollBarValueChanged(int value);
 
   public:
-    void appendImages(const QStringList& paths);
+    void
+    appendImages(const QStringList& paths);
 
   private:
     Q_INVOKABLE void _addImageToQueue(const ImageData* data);
@@ -140,11 +142,14 @@ class ImagesCarousel : public QWidget {
     QQueue<ImageItem*> m_imageQueue;
     QList<ImageItem*> m_loadedImages;
     QTimer* m_updateTimer;
-    int m_currentIndex = 0;
-    QPropertyAnimation* m_scrollAnimation;
-    QHBoxLayout* m_imagesLayout = nullptr;
+    int m_currentIndex                    = 0;
+    QPropertyAnimation* m_scrollAnimation = nullptr;
+    QHBoxLayout* m_imagesLayout           = nullptr;
     QMutex m_imageCountMutex;
-    int m_imageCount = 0;
+    int m_imageCount              = 0;
+    bool m_suppressAutoFocus      = false;
+    int m_pendingScrollValue      = 0;
+    QTimer* m_scrollDebounceTimer = nullptr;
 
   signals:
     void imageFocused(const QString& path, const int index, const int count);
@@ -157,13 +162,17 @@ class ImagesCarouselScrollArea : public QScrollArea {
   public:
     explicit ImagesCarouselScrollArea(QWidget* parent = nullptr)
         : QScrollArea(parent) {
-        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        setWidgetResizable(true);
+        // setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        // setWidgetResizable(true);
     }
 
   protected:
     void keyPressEvent(QKeyEvent* event) override {
-        event->ignore();
+        if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right) {
+            event->ignore();
+        } else {
+            QScrollArea::keyPressEvent(event);
+        }
     }
 };
 

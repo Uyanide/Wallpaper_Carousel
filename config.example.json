@@ -23,7 +23,7 @@
     "window_height": 500
   },
   "sort": {
-    "type": "size",
+    "type": "name",
     "reverse": false
   }
 }

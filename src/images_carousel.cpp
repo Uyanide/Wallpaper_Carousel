@@ -1,13 +1,15 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 00:47:21
+ * @LastEditTime: 2025-08-06 01:27:49
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
 
 #include <pthread.h>
 #include <qboxlayout.h>
+#include <qdebug.h>
+#include <qobject.h>
 
 #include <QLabel>
 #include <QMetaObject>
@@ -30,7 +32,6 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
     : QWidget(parent),
       ui(new Ui::ImagesCarousel),
       m_updateTimer(new QTimer(this)),
-      m_scrollAnimation(nullptr),
       m_itemWidth(itemWidth),
       m_itemHeight(static_cast<int>(itemWidth / itemAspectRatio)),
       m_itemFocusWidth(itemFocusWidth),
@@ -40,12 +41,41 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
     ui->setupUi(this);
 
     m_imagesLayout = dynamic_cast<QHBoxLayout*>(ui->scrollAreaWidgetContents->layout());
-    connect(m_updateTimer, &QTimer::timeout, this, &ImagesCarousel::_updateImages);
+
+    // Load initial images
+    connect(m_updateTimer,
+            &QTimer::timeout,
+            this,
+            &ImagesCarousel::_updateImages);
+    connect(this,
+            &ImagesCarousel::imagesLoaded,
+            this,
+            [this]() {
+                _focusCurrImage();
+                disconnect(this, &ImagesCarousel::imagesLoaded, this, nullptr);
+            });
     m_updateTimer->start(100);
 
-    connect(this, &ImagesCarousel::imagesLoaded, this, [this]() {
-        _focusCurrImage();
-    });
+    // Auto focus when scrolling
+    m_scrollDebounceTimer = new QTimer(this);
+    m_scrollDebounceTimer->setSingleShot(true);
+    m_scrollDebounceTimer->setInterval(200);
+    connect(m_scrollDebounceTimer,
+            &QTimer::timeout,
+            this,
+            [this]() {
+                _onScrollBarValueChanged(m_pendingScrollValue);
+            });
+    connect(ui->scrollArea->horizontalScrollBar(),
+            &QScrollBar::valueChanged,
+            this,
+            [this](int value) {
+                m_pendingScrollValue = value;
+                if (m_suppressAutoFocus) {
+                    return;
+                }
+                m_scrollDebounceTimer->start();
+            });
 }
 
 ImagesCarousel::~ImagesCarousel() {
@@ -57,7 +87,7 @@ ImagesCarousel::~ImagesCarousel() {
     // ...
     if (m_scrollAnimation) {
         m_scrollAnimation->stop();
-        delete m_scrollAnimation;
+        m_scrollAnimation->deleteLater();
     }
 }
 
@@ -199,7 +229,7 @@ void ImagesCarousel::_focusCurrImage() {
 
     if (m_scrollAnimation) {
         m_scrollAnimation->stop();
-        delete m_scrollAnimation;
+        m_scrollAnimation->deleteLater();
         m_scrollAnimation = nullptr;
     }
 
@@ -208,7 +238,37 @@ void ImagesCarousel::_focusCurrImage() {
     m_scrollAnimation->setStartValue(hScrollBar->value());
     m_scrollAnimation->setEndValue(leftOffset);
     m_scrollAnimation->setEasingCurve(QEasingCurve::OutCubic);
+
+    // Suppress auto focus during animation
+    connect(m_scrollAnimation,
+            &QPropertyAnimation::finished,
+            this,
+            [this]() {
+                m_suppressAutoFocus = false;
+            });
+    m_suppressAutoFocus = true;
     m_scrollAnimation->start();
+}
+
+void ImagesCarousel::_onScrollBarValueChanged(int value) {
+    // Stop the animation if it is running
+    if (m_scrollAnimation && m_scrollAnimation->state() == QPropertyAnimation::Running) {
+        m_scrollAnimation->stop();
+        m_scrollAnimation->deleteLater();
+        m_scrollAnimation = nullptr;
+    }
+    int centerOffset = (value + m_itemFocusWidth / 2);
+    int itemOffset   = m_itemWidth + ui->scrollAreaWidgetContents->layout()->spacing();
+    int index        = centerOffset / itemOffset;
+    if (index < 0 || index >= m_loadedImages.size()) {
+        return;  // Out of bounds
+    }
+    if (index == m_currentIndex) {
+        return;  // Already focused
+    }
+    _unfocusCurrImage();
+    m_currentIndex = index;
+    _focusCurrImage();
 }
 
 ImageItem::ImageItem(const ImageData* data,
