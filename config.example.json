@@ -14,5 +14,12 @@
   },
   "actions": {
     "confirm": "~/.scripts/change-wallpaper.fish \"%1\""
+  },
+  "style": {
+    "aspect_ratio": 1.6,
+    "image_width": 320,
+    "image_focus_width": 480,
+    "window_width": 750,
+    "window_height": 500
   }
 }

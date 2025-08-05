@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 17:40:35
+ * @LastEditTime: 2025-08-05 20:12:40
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -17,11 +17,8 @@
 
 using namespace GeneralLogger;
 
-MainWindow::MainWindow(const QString &configDir, QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow) {
-
-    m_config = new Config(configDir, {}, this);
-
+MainWindow::MainWindow(const Config &config, QWidget *parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow), m_config(config) {
     ui->setupUi(this);
     _setupUI();
 }
@@ -31,13 +28,25 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::_setupUI() {
+    // insert images carousel
+    m_carousel = new ImagesCarousel(
+        m_config.getStyleAspectRatio(),
+        m_config.getStyleImageWidth(),
+        m_config.getStyleImageFocusWidth(),
+        this);
+    ui->mainLayout->insertWidget(0, m_carousel);
+
+    // set window size
+    setMinimumSize(m_config.getStyleWindowWidth(), m_config.getStyleWindowHeight());
+    setMaximumSize(m_config.getStyleWindowWidth(), m_config.getStyleWindowHeight());
+
     connect(ui->confirmButton, &QPushButton::clicked, this, &MainWindow::onConfirm);
     connect(ui->cancelButton, &QPushButton::clicked, this, &MainWindow::onCancel);
     ui->confirmButton->setFocusPolicy(Qt::NoFocus);
     ui->cancelButton->setFocusPolicy(Qt::NoFocus);
 
-    for (const auto &image : m_config->getWallpapers()) {
-        ui->carousel->appendImage(image);
+    for (const auto &image : m_config.getWallpapers()) {
+        m_carousel->appendImage(image);
     }
 }
 
@@ -47,9 +56,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
     } else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
         onConfirm();
     } else if (event->key() == Qt::Key_Space || event->key() == Qt::Key_Tab || event->key() == Qt::Key_Right) {
-        ui->carousel->focusNextImage();
+        m_carousel->focusNextImage();
     } else if (event->key() == Qt::Key_Left) {
-        ui->carousel->focusPrevImage();
+        m_carousel->focusPrevImage();
     } else {
         QMainWindow::keyPressEvent(event);
     }
@@ -57,13 +66,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 
 void MainWindow::onConfirm() {
     close();
-    const auto path = ui->carousel->getCurrentImagePath();
+    const auto path = m_carousel->getCurrentImagePath();
     if (path.isEmpty()) {
         warn("No image selected");
         return;
     }
     info(QString("Selected image: %1").arg(path));
-    const auto cmdOrig = m_config->getActionsConfirm();
+    const auto cmdOrig = m_config.getActionsConfirm();
     if (cmdOrig.isEmpty()) {
         warn("No action defined for confirmation");
         return;

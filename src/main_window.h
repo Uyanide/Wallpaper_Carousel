@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 17:23:41
+ * @LastEditTime: 2025-08-05 19:53:51
  * @Description: MainWindow implementation.
  */
 #ifndef MAINWINDOW_H
@@ -10,6 +10,7 @@
 #include <QMainWindow>
 
 #include "config.h"
+#include "images_carousel.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -23,7 +24,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
   public:
-    MainWindow(const QString &configDir, QWidget *parent = nullptr);
+    MainWindow(const Config &config, QWidget *parent = nullptr);
     ~MainWindow();
 
   public slots:
@@ -38,6 +39,7 @@ class MainWindow : public QMainWindow {
 
   private:
     Ui::MainWindow *ui;
-    Config *m_config;
+    ImagesCarousel *m_carousel = nullptr;
+    const Config &m_config;
 };
 #endif  // MAINWINDOW_H

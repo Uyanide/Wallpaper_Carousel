@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 17:34:37
+ * @LastEditTime: 2025-08-05 19:42:07
  * @Description: Entry point.
  */
 #include <qapplication.h>
@@ -11,6 +11,7 @@
 #include <QStandardPaths>
 #include <QTextStream>
 
+#include "config.h"
 #include "logger.h"
 #include "main_window.h"
 
@@ -28,7 +29,9 @@ static QString getConfigDir() {
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
-    MainWindow w(::getConfigDir());
+    Config config(getConfigDir());
+
+    MainWindow w(config);
     w.show();
 
     return a.exec();

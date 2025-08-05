@@ -1,11 +1,13 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-05 17:25:34
+ * @LastEditTime: 2025-08-05 19:47:43
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
 #define IMAGES_CAROUSEL_H
+
+#include <qtmetamacros.h>
 
 #include <QKeyEvent>
 #include <QLabel>
@@ -22,15 +24,20 @@
 
 class ImagesCarousel;
 
+/**
+ * @brief Data structure to hold image information
+ *        and can be safely created and passed between threads.
+ */
 struct ImageData {
     QString path;
     QPixmap pixmap;
 
-    ImageData() = default;
-
-    explicit ImageData(const QString& p);
+    explicit ImageData(const QString& p, const int initWidth, const int initHeight);
 };
 
+/**
+ * @brief Image label that displays an image
+ */
 class ImageItem : public QLabel {
     Q_OBJECT
 
@@ -42,13 +49,14 @@ class ImageItem : public QLabel {
                        const int itemFocusHeight,
                        QWidget* parent = nullptr);
 
+    ~ImageItem() override;
+
     [[nodiscard]] const QString& getPath() const { return m_data->path; }
 
     [[nodiscard]] const QPixmap& getPixmap() const { return m_data->pixmap; }
 
-  public slots:
-    void focusImage();
-    void unfocusImage();
+  public:
+    void setFocus(bool focus = true);
 
   private:
     const ImageData* m_data;
@@ -65,6 +73,8 @@ class ImageLoader : public QRunnable {
   private:
     QString m_path;
     ImagesCarousel* m_carousel;
+    const int m_initWidth;
+    const int m_initHeight;
 };
 
 namespace Ui {
@@ -74,14 +84,15 @@ class ImagesCarousel;
 class ImagesCarousel : public QWidget {
     Q_OBJECT
 
+    friend void ImageLoader::run();
+
   public:
-    explicit ImagesCarousel(QWidget* parent = nullptr);
+    explicit ImagesCarousel(const double itemAspectRatio,
+                            const int itemWidth,
+                            const int itemFocusWidth,
+                            QWidget* parent = nullptr);
     ~ImagesCarousel();
 
-    static constexpr int s_itemWidth         = 320;
-    static constexpr int s_itemHeight        = 200;
-    static constexpr int s_itemFocusWidth    = 480;
-    static constexpr int s_itemFocusHeight   = 300;
     static constexpr int s_animationDuration = 300;
 
     [[nodiscard]] QString getCurrentImagePath() const {
@@ -91,16 +102,25 @@ class ImagesCarousel : public QWidget {
         return m_loadedImages[m_currentIndex]->getPath();
     }
 
+    const int m_itemWidth       = 320;
+    const int m_itemHeight      = 180;
+    const int m_itemFocusWidth  = 480;
+    const int m_itemFocusHeight = 270;
+
   public slots:
-    void addImageToQueue(const ImageData* data);
-    void appendImage(const QString& path);
     void focusNextImage();
     void focusPrevImage();
-    void unfocusCurrImage();
-    void focusCurrImage();
 
   private slots:
-    void updateImages();
+    void _unfocusCurrImage();
+
+  public:
+    void appendImage(const QString& path);
+
+  private:
+    Q_INVOKABLE void _addImageToQueue(const ImageData* data);
+    void _focusCurrImage();
+    void _updateImages();
 
   private:
     Ui::ImagesCarousel* ui;

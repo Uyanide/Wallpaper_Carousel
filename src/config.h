@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-05 17:26:25
+ * @LastEditTime: 2025-08-05 20:12:47
  * @Description: Configuration manager.
  */
 #ifndef CONFIG_H
@@ -27,6 +27,16 @@ class Config : public QObject {
 
     [[nodiscard]] const QString& getActionsConfirm() const { return m_configItems.actionsConfirm; }
 
+    [[nodiscard]] double getStyleAspectRatio() const { return m_configItems.styleAspectRatio; }
+
+    [[nodiscard]] int getStyleImageWidth() const { return m_configItems.styleImageWidth; }
+
+    [[nodiscard]] int getStyleImageFocusWidth() const { return m_configItems.styleImageFocusWidth; }
+
+    [[nodiscard]] int getStyleWindowWidth() const { return m_configItems.styleWindowWidth; }
+
+    [[nodiscard]] int getStyleWindowHeight() const { return m_configItems.styleWindowHeight; }
+
     static const QString s_DefaultConfigFileName;
 
   private:
@@ -35,11 +45,16 @@ class Config : public QObject {
     void _loadWallpapers();
 
   private:
-    struct ConfigItems {
+    struct _ConfigItems {
         QStringList wallpaperPaths;
         QStringList wallpaperDirs;
         QStringList wallpaperExcludes;
         QString actionsConfirm;
+        double styleAspectRatio  = 1.6;
+        int styleImageWidth      = 320;
+        int styleImageFocusWidth = 480;
+        int styleWindowWidth     = 800;
+        int styleWindowHeight    = 600;
     } m_configItems;
 
     QStringList m_wallpapers;

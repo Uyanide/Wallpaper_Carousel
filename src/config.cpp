@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-05 17:26:33
+ * @LastEditTime: 2025-08-05 20:11:11
  * @Description: Configuration manager.
  */
 #include "config.h"
@@ -19,22 +19,6 @@ using namespace GeneralLogger;
 
 static QString expandPath(const QString &path);
 
-const QString Config::s_DefaultConfigFileName = "config.json";
-
-Config::Config(const QString &configDir, const QStringList &searchDirs, QObject *parent) : QObject(parent) {
-    info(QString("Loading configuration from: %1").arg(configDir));
-    _loadConfig(configDir + QDir::separator() + s_DefaultConfigFileName);
-
-    info(QString("Additional search directories: %1").arg(searchDirs.join(", ")));
-    m_configItems.wallpaperDirs.append(searchDirs);
-
-    info("Loading wallpapers ...");
-    _loadWallpapers();
-}
-
-Config::~Config() {
-}
-
 void Config::_loadConfig(const QString &configPath) {
     QFile configFile(configPath);
     if (!configFile.open(QIODevice::ReadOnly)) {
@@ -50,40 +34,115 @@ void Config::_loadConfig(const QString &configPath) {
         return;
     }
 
-    static const auto parseJsonArray = [](const QJsonObject &obj, const QString &key, QStringList &list) {
-        if (obj.contains(key) && obj[key].isArray()) {
-            QJsonArray array = obj[key].toArray();
-            for (const QJsonValue &value : array) {
-                if (value.isString()) {
-                    list.append(::expandPath(value.toString()));
+    const auto jsonObj = jsonDoc.object();
+
+    struct ConfigMapping {
+        QString path;
+        QString key;
+        std::function<void(const QJsonValue &)> parser;
+    };
+
+    static const auto parseJsonArray = [](const QJsonValue &val, QStringList &list) {
+        if (val.isArray()) {
+            for (const auto &item : val.toArray()) {
+                if (item.isString()) {
+                    list.append(::expandPath(item.toString()));
                 }
             }
-        } else {
-            warn(QString("Key '%1' not found or not an array in config").arg(key));
         }
     };
 
-    const auto jsonObj = jsonDoc.object();
-    if (!jsonObj.contains("wallpaper") || !jsonObj["wallpaper"].isObject()) {
-        warn("Key 'wallpaper' not fount or not an object in config");
-    } else {
-        const auto wallpaperObj = jsonObj.value("wallpaper").toObject();
-        parseJsonArray(wallpaperObj, "paths", m_configItems.wallpaperPaths);
-        parseJsonArray(wallpaperObj, "dirs", m_configItems.wallpaperDirs);
-        parseJsonArray(wallpaperObj, "excludes", m_configItems.wallpaperExcludes);
-    }
+    std::vector<ConfigMapping>
+        mappings = {
+            {"wallpaper.paths", "paths", [this](const QJsonValue &val) {
+                 parseJsonArray(val, m_configItems.wallpaperPaths);
+             }},
+            {"wallpaper.dirs", "dirs", [this](const QJsonValue &val) {
+                 parseJsonArray(val, m_configItems.wallpaperDirs);
+             }},
+            {"wallpaper.excludes", "excludes", [this](const QJsonValue &val) {
+                 parseJsonArray(val, m_configItems.wallpaperExcludes);
+             }},
+            {"actions.confirm", "confirm", [this](const QJsonValue &val) {
+                 if (val.isString()) {
+                     m_configItems.actionsConfirm = ::expandPath(val.toString());
+                     info(QString("Action confirm: %1").arg(m_configItems.actionsConfirm));
+                 }
+             }},
+            {"style.aspect_ratio", "aspect_ratio", [this](const QJsonValue &val) {
+                 if (val.isDouble() && val.toDouble() > 0) {
+                     m_configItems.styleAspectRatio = val.toDouble();
+                     info(QString("Aspect ratio: %1").arg(m_configItems.styleAspectRatio));
+                 }
+             }},
+            {"style.image_width", "image_width", [this](const QJsonValue &val) {
+                 if (val.isDouble() && val.toDouble() > 0) {
+                     m_configItems.styleImageWidth = val.toInt();
+                     info(QString("Image width: %1").arg(m_configItems.styleImageWidth));
+                 }
+             }},
+            {"style.image_focus_width", "image_focus_width", [this](const QJsonValue &val) {
+                 if (val.isDouble() && val.toDouble() > 0) {
+                     m_configItems.styleImageFocusWidth = val.toInt();
+                     info(QString("Image focus width: %1").arg(m_configItems.styleImageFocusWidth));
+                 }
+             }},
+            {"style.window_width", "window_width", [this](const QJsonValue &val) {
+                 if (val.isDouble() && val.toDouble() > 0) {
+                     m_configItems.styleWindowWidth = val.toInt();
+                     info(QString("Window width: %1").arg(m_configItems.styleWindowWidth));
+                 }
+             }},
+            {"style.window_height", "window_height", [this](const QJsonValue &val) {
+                 if (val.isDouble() && val.toDouble() > 0) {
+                     m_configItems.styleWindowHeight = val.toInt();
+                     info(QString("Window height: %1").arg(m_configItems.styleWindowHeight));
+                 }
+             }},
+        };
 
-    if (!jsonObj.contains("actions") || !jsonObj["actions"].isObject()) {
-        warn("Key 'actions' not found or not an object in config");
-    } else {
-        const auto actionsObj = jsonObj.value("actions").toObject();
-        if (actionsObj.contains("confirm") && actionsObj["confirm"].isString()) {
-            m_configItems.actionsConfirm = ::expandPath(actionsObj["confirm"].toString());
-            info(QString("Action on confirm: %1").arg(m_configItems.actionsConfirm));
-        } else {
-            warn("Key 'confirm' not found or not a string in 'actions'");
-        }
+    // 统一解析
+    for (const auto &mapping : mappings) {
+        ([&mapping, &jsonObj]() {
+            auto pathParts = mapping.path.split('.');
+
+            QJsonObject currentObj = jsonObj;
+            QJsonValue targetValue;
+
+            for (int i = 0; i < pathParts.size() - 1; ++i) {
+                if (currentObj.contains(pathParts[i]) && currentObj[pathParts[i]].isObject()) {
+                    currentObj = currentObj[pathParts[i]].toObject();
+                } else {
+                    warn(QString("Path '%1' not found").arg(pathParts.mid(0, i + 1).join('.')));
+                    return;
+                }
+            }
+
+            // 获取目标值
+            const QString &finalKey = pathParts.last();
+            if (currentObj.contains(finalKey)) {
+                mapping.parser(currentObj[finalKey]);
+            } else {
+                warn(QString("Key '%1' not found in '%2'").arg(finalKey).arg(mapping.path));
+            }
+        })();
     }
+}
+
+const QString Config::s_DefaultConfigFileName = "config.json";
+
+Config::Config(const QString &configDir, const QStringList &searchDirs, QObject *parent) : QObject(parent) {
+    info(QString("Loading configuration from: %1").arg(configDir));
+    _loadConfig(configDir + QDir::separator() + s_DefaultConfigFileName);
+
+    info(QString("Additional search directories: %1").arg(searchDirs.join(", ")));
+    m_configItems.wallpaperDirs.append(searchDirs);
+
+    info("Loading wallpapers ...");
+    _loadWallpapers();
+}
+
+Config::~Config() {
 }
 
 void Config::_loadWallpapers() {

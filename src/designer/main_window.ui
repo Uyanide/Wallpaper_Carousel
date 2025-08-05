@@ -35,17 +35,7 @@
    <set>QMainWindow::DockOption::AllowTabbedDocks|QMainWindow::DockOption::AnimatedDocks</set>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="ImagesCarousel" name="carousel" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </item>
+   <layout class="QVBoxLayout" name="mainLayout">
     <item>
      <widget class="QWidget" name="actions" native="true">
       <property name="minimumSize">
@@ -100,14 +90,6 @@
    </layout>
   </widget>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>ImagesCarousel</class>
-   <extends>QWidget</extends>
-   <header>images_carousel.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-05 17:25:59
+ * @LastEditTime: 2025-08-05 20:06:23
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -21,20 +21,27 @@
 
 using namespace GeneralLogger;
 
-ImagesCarousel::ImagesCarousel(QWidget* parent)
+ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
+                               const int itemWidth,
+                               const int itemFocusWidth,
+                               QWidget* parent)
     : QWidget(parent),
       ui(new Ui::ImagesCarousel),
       m_updateTimer(new QTimer(this)),
-      m_scrollAnimation(nullptr) {
+      m_scrollAnimation(nullptr),
+      m_itemWidth(itemWidth),
+      m_itemHeight(static_cast<int>(itemWidth / itemAspectRatio)),
+      m_itemFocusWidth(itemFocusWidth),
+      m_itemFocusHeight(static_cast<int>(itemFocusWidth / itemAspectRatio)) {
     ui->setupUi(this);
 
-    connect(m_updateTimer, &QTimer::timeout, this, &ImagesCarousel::updateImages);
+    connect(m_updateTimer, &QTimer::timeout, this, &ImagesCarousel::_updateImages);
     m_updateTimer->start(100);
 }
 
 ImagesCarousel::~ImagesCarousel() {
     delete ui;
-    for (auto item : m_imageQueue) {
+    for (auto item : std::as_const(m_imageQueue)) {
         delete item;
     }
     if (m_scrollAnimation) {
@@ -49,22 +56,26 @@ void ImagesCarousel::appendImage(const QString& path) {
 }
 
 ImageLoader::ImageLoader(const QString& path, ImagesCarousel* carousel)
-    : m_path(path), m_carousel(carousel) {
+    : m_path(path),
+      m_carousel(carousel),
+      m_initWidth(carousel->m_itemFocusWidth),
+      m_initHeight(carousel->m_itemFocusHeight) {
     setAutoDelete(true);
 }
 
-void ImagesCarousel::addImageToQueue(const ImageData* data) {
+void ImagesCarousel::_addImageToQueue(const ImageData* data) {
     QMutexLocker locker(&m_queueMutex);
-    auto imageItem = new ImageItem(data,
-                                   s_itemWidth,
-                                   s_itemHeight,
-                                   s_itemFocusWidth,
-                                   s_itemFocusHeight,
-                                   this);
+    auto imageItem = new ImageItem(
+        data,
+        m_itemWidth,
+        m_itemHeight,
+        m_itemFocusWidth,
+        m_itemFocusHeight,
+        this);
     m_imageQueue.enqueue(imageItem);
 }
 
-void ImagesCarousel::updateImages() {
+void ImagesCarousel::_updateImages() {
     QMutexLocker locker(&m_queueMutex);
 
     int processCount = 0;
@@ -72,30 +83,31 @@ void ImagesCarousel::updateImages() {
         ImageItem* item = m_imageQueue.dequeue();
         ui->scrollAreaWidgetContents->layout()->addWidget(item);
         m_loadedImages.append(item);
+        // focus first image
         if (m_loadedImages.size() == 1) {
-            item->focusImage();
+            item->setFocus(true);
         } else {
-            item->unfocusImage();
+            item->setFocus(false);
         }
         processCount++;
     }
 }
 
 void ImageLoader::run() {
-    auto data = new ImageData(m_path);
+    auto data = new ImageData(m_path, m_initWidth, m_initHeight);
     QMetaObject::invokeMethod(m_carousel,
-                              "addImageToQueue",
+                              "_addImageToQueue",
                               Qt::QueuedConnection,
                               Q_ARG(const ImageData*, data));
 }
 
-ImageData::ImageData(const QString& p) : path(p) {
+ImageData::ImageData(const QString& p, const int initWidth, const int initHeight) : path(p) {
     path = p;
     if (!pixmap.load(p)) {
         warn(QString("Failed to load image from path: %1").arg(p));
     }
     // resize in "cover" mode
-    const QSize targetSize(ImagesCarousel::s_itemWidth, ImagesCarousel::s_itemHeight);
+    const QSize targetSize(initWidth, initHeight);
     pixmap = pixmap.scaled(targetSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
 
     // Crop to center
@@ -105,34 +117,34 @@ ImageData::ImageData(const QString& p) : path(p) {
 }
 
 void ImagesCarousel::focusNextImage() {
-    unfocusCurrImage();
+    _unfocusCurrImage();
     if (m_loadedImages.size() <= 1) return;
     m_currentIndex++;
     if (m_currentIndex >= m_loadedImages.size()) {
         m_currentIndex = 0;
     }
-    focusCurrImage();
+    _focusCurrImage();
 }
 
 void ImagesCarousel::focusPrevImage() {
     if (m_loadedImages.size() <= 1) return;
-    unfocusCurrImage();
+    _unfocusCurrImage();
     m_currentIndex--;
     if (m_currentIndex < 0) {
         m_currentIndex = m_loadedImages.size() - 1;
     }
-    focusCurrImage();
+    _focusCurrImage();
 }
 
-void ImagesCarousel::unfocusCurrImage() {
-    m_loadedImages[m_currentIndex]->unfocusImage();
+void ImagesCarousel::_unfocusCurrImage() {
+    m_loadedImages[m_currentIndex]->setFocus(false);
 }
 
-void ImagesCarousel::focusCurrImage() {
-    m_loadedImages[m_currentIndex]->focusImage();
+void ImagesCarousel::_focusCurrImage() {
+    m_loadedImages[m_currentIndex]->setFocus(true);
     auto hScrollBar  = ui->scrollArea->horizontalScrollBar();
     int spacing      = ui->scrollAreaWidgetContents->layout()->spacing();
-    int centerOffset = (s_itemWidth + spacing) * m_currentIndex + s_itemFocusWidth / 2 - spacing;
+    int centerOffset = (m_itemWidth + spacing) * m_currentIndex + m_itemFocusWidth / 2 - spacing;
     int leftOffset   = centerOffset - ui->scrollArea->width() / 2;
     if (leftOffset < 0) {
         leftOffset = 0;
@@ -162,12 +174,21 @@ ImageItem::ImageItem(const ImageData* data,
       m_data(data),
       m_itemSize(itemWidth, itemHeight),
       m_itemFocusSize(itemFocusWidth, itemFocusHeight) {
-    setPixmap(data->pixmap);
-    setFixedSize(ImagesCarousel::s_itemWidth, ImagesCarousel::s_itemHeight);
     setScaledContents(true);
+    setPixmap(data->pixmap);
+    setFixedSize(itemWidth, itemHeight);
 }
 
-void ImageItem::focusImage() {
+ImageItem::~ImageItem() {
+    if (m_scaleAnimation) {
+        m_scaleAnimation->stop();
+        delete m_scaleAnimation;
+        m_scaleAnimation = nullptr;
+    }
+    delete m_data;
+}
+
+void ImageItem::setFocus(bool focus) {
     if (m_scaleAnimation) {
         m_scaleAnimation->stop();
         delete m_scaleAnimation;
@@ -176,27 +197,7 @@ void ImageItem::focusImage() {
     m_scaleAnimation = new QPropertyAnimation(this, "size");
     m_scaleAnimation->setDuration(ImagesCarousel::s_animationDuration);
     m_scaleAnimation->setStartValue(size());
-    m_scaleAnimation->setEndValue(m_itemFocusSize);
-    m_scaleAnimation->setEasingCurve(QEasingCurve::OutCubic);
-    connect(m_scaleAnimation,
-            &QPropertyAnimation::valueChanged,
-            this,
-            [this](const QVariant& value) {
-                setFixedSize(value.toSize());
-            });
-    m_scaleAnimation->start();
-}
-
-void ImageItem::unfocusImage() {
-    if (m_scaleAnimation) {
-        m_scaleAnimation->stop();
-        delete m_scaleAnimation;
-        m_scaleAnimation = nullptr;
-    }
-    m_scaleAnimation = new QPropertyAnimation(this, "size");
-    m_scaleAnimation->setDuration(ImagesCarousel::s_animationDuration);
-    m_scaleAnimation->setStartValue(size());
-    m_scaleAnimation->setEndValue(m_itemSize);
+    m_scaleAnimation->setEndValue(focus ? m_itemFocusSize : m_itemSize);
     m_scaleAnimation->setEasingCurve(QEasingCurve::OutCubic);
     connect(m_scaleAnimation,
             &QPropertyAnimation::valueChanged,
