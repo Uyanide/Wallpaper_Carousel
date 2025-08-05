@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-05 20:11:11
+ * @LastEditTime: 2025-08-06 00:23:54
  * @Description: Configuration manager.
  */
 #include "config.h"
@@ -99,6 +99,29 @@ void Config::_loadConfig(const QString &configPath) {
                      info(QString("Window height: %1").arg(m_configItems.styleWindowHeight));
                  }
              }},
+            {"sort.type", "type", [this](const QJsonValue &val) {
+                 if (val.isString()) {
+                     QString type = val.toString().toLower();
+                     if (type == "none") {
+                         m_configItems.sortType = SortType::None;
+                     } else if (type == "name") {
+                         m_configItems.sortType = SortType::Name;
+                     } else if (type == "date") {
+                         m_configItems.sortType = SortType::Date;
+                     } else if (type == "size") {
+                         m_configItems.sortType = SortType::Size;
+                     } else {
+                         warn(QString("Unknown sort type: %1").arg(type));
+                     }
+                 }
+                 info(QString("Sort type: %1").arg(static_cast<int>(m_configItems.sortType)));
+             }},
+            {"sort.reverse", "reverse", [this](const QJsonValue &val) {
+                 if (val.isBool()) {
+                     m_configItems.sortReverse = val.toBool();
+                     info(QString("Sort reverse: %1").arg(m_configItems.sortReverse));
+                 }
+             }},
         };
 
     // 统一解析
@@ -180,6 +203,7 @@ void Config::_loadWallpapers() {
             m_wallpapers.append(path);
         }
     }
+
     info(QString("Found %1 wallpapers").arg(paths.size()));
 }
 

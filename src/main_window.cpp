@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 20:12:40
+ * @LastEditTime: 2025-08-06 00:48:11
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -16,6 +16,11 @@
 #include "logger.h"
 
 using namespace GeneralLogger;
+
+static QString splitNameFromPath(const QString &path) {
+    QFileInfo fileInfo(path);
+    return fileInfo.fileName();
+}
 
 MainWindow::MainWindow(const Config &config, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_config(config) {
@@ -33,8 +38,11 @@ void MainWindow::_setupUI() {
         m_config.getStyleAspectRatio(),
         m_config.getStyleImageWidth(),
         m_config.getStyleImageFocusWidth(),
+        m_config.getSortType(),
+        m_config.isSortReverse(),
         this);
-    ui->mainLayout->insertWidget(0, m_carousel);
+    ui->mainLayout->insertWidget(2, m_carousel);
+    connect(m_carousel, &ImagesCarousel::imageFocused, this, &MainWindow::_onImageFocused);
 
     // set window size
     setMinimumSize(m_config.getStyleWindowWidth(), m_config.getStyleWindowHeight());
@@ -45,9 +53,7 @@ void MainWindow::_setupUI() {
     ui->confirmButton->setFocusPolicy(Qt::NoFocus);
     ui->cancelButton->setFocusPolicy(Qt::NoFocus);
 
-    for (const auto &image : m_config.getWallpapers()) {
-        m_carousel->appendImage(image);
-    }
+    m_carousel->appendImages(m_config.getWallpapers());
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
@@ -90,4 +96,8 @@ void MainWindow::onConfirm() {
 
 void MainWindow::onCancel() {
     close();
+}
+
+void MainWindow::_onImageFocused(const QString &path, const int index, const int count) {
+    ui->topLabel->setText(QString("%1 (%2/%3)").arg(splitNameFromPath(path)).arg(index + 1).arg(count));
 }

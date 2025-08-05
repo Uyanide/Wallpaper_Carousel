@@ -1,14 +1,14 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-05 19:47:43
+ * @LastEditTime: 2025-08-06 00:47:12
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
 #define IMAGES_CAROUSEL_H
 
-#include <qtmetamacros.h>
-
+#include <QFileInfo>
+#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QMutex>
@@ -22,6 +22,8 @@
 #include <QTimer>
 #include <QWidget>
 
+#include "config.h"
+
 class ImagesCarousel;
 
 /**
@@ -29,7 +31,7 @@ class ImagesCarousel;
  *        and can be safely created and passed between threads.
  */
 struct ImageData {
-    QString path;
+    QFileInfo file;
     QPixmap pixmap;
 
     explicit ImageData(const QString& p, const int initWidth, const int initHeight);
@@ -51,9 +53,15 @@ class ImageItem : public QLabel {
 
     ~ImageItem() override;
 
-    [[nodiscard]] const QString& getPath() const { return m_data->path; }
+    [[nodiscard]] QString getFileFullPath() const { return m_data->file.absoluteFilePath(); }
+
+    [[nodiscard]] QString getFileName() const { return m_data->file.fileName(); }
+
+    [[nodiscard]] QDateTime getFileDate() const { return m_data->file.lastModified(); }
 
     [[nodiscard]] const QPixmap& getPixmap() const { return m_data->pixmap; }
+
+    [[nodiscard]] qint64 getFileSize() const { return m_data->file.size(); }
 
   public:
     void setFocus(bool focus = true);
@@ -90,6 +98,8 @@ class ImagesCarousel : public QWidget {
     explicit ImagesCarousel(const double itemAspectRatio,
                             const int itemWidth,
                             const int itemFocusWidth,
+                            const Config::SortType sortType,
+                            const bool sortReverse,
                             QWidget* parent = nullptr);
     ~ImagesCarousel();
 
@@ -99,13 +109,15 @@ class ImagesCarousel : public QWidget {
         if (m_currentIndex < 0 || m_currentIndex >= m_loadedImages.size()) {
             return "";
         }
-        return m_loadedImages[m_currentIndex]->getPath();
+        return m_loadedImages[m_currentIndex]->getFileFullPath();
     }
 
-    const int m_itemWidth       = 320;
-    const int m_itemHeight      = 180;
-    const int m_itemFocusWidth  = 480;
-    const int m_itemFocusHeight = 270;
+    const int m_itemWidth             = 320;
+    const int m_itemHeight            = 180;
+    const int m_itemFocusWidth        = 480;
+    const int m_itemFocusHeight       = 270;
+    const Config::SortType m_sortType = Config::SortType::None;
+    const bool m_sortReverse          = false;
 
   public slots:
     void focusNextImage();
@@ -115,7 +127,7 @@ class ImagesCarousel : public QWidget {
     void _unfocusCurrImage();
 
   public:
-    void appendImage(const QString& path);
+    void appendImages(const QStringList& paths);
 
   private:
     Q_INVOKABLE void _addImageToQueue(const ImageData* data);
@@ -130,6 +142,13 @@ class ImagesCarousel : public QWidget {
     QTimer* m_updateTimer;
     int m_currentIndex = 0;
     QPropertyAnimation* m_scrollAnimation;
+    QHBoxLayout* m_imagesLayout = nullptr;
+    QMutex m_imageCountMutex;
+    int m_imageCount = 0;
+
+  signals:
+    void imageFocused(const QString& path, const int index, const int count);
+    void imagesLoaded();
 };
 
 class ImagesCarouselScrollArea : public QScrollArea {

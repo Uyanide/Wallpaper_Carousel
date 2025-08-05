@@ -1,20 +1,20 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-05 20:06:23
+ * @LastEditTime: 2025-08-06 00:47:21
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
 
 #include <pthread.h>
-#include <qevent.h>
-#include <qpropertyanimation.h>
-#include <qvariantanimation.h>
+#include <qboxlayout.h>
 
 #include <QLabel>
 #include <QMetaObject>
 #include <QScrollArea>
 #include <QScrollBar>
+#include <QVector>
+#include <functional>
 
 #include "logger.h"
 #include "ui_images_carousel.h"
@@ -24,6 +24,8 @@ using namespace GeneralLogger;
 ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
                                const int itemWidth,
                                const int itemFocusWidth,
+                               const Config::SortType sortType,
+                               const bool sortReverse,
                                QWidget* parent)
     : QWidget(parent),
       ui(new Ui::ImagesCarousel),
@@ -32,11 +34,18 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
       m_itemWidth(itemWidth),
       m_itemHeight(static_cast<int>(itemWidth / itemAspectRatio)),
       m_itemFocusWidth(itemFocusWidth),
-      m_itemFocusHeight(static_cast<int>(itemFocusWidth / itemAspectRatio)) {
+      m_itemFocusHeight(static_cast<int>(itemFocusWidth / itemAspectRatio)),
+      m_sortType(sortType),
+      m_sortReverse(sortReverse) {
     ui->setupUi(this);
 
+    m_imagesLayout = dynamic_cast<QHBoxLayout*>(ui->scrollAreaWidgetContents->layout());
     connect(m_updateTimer, &QTimer::timeout, this, &ImagesCarousel::_updateImages);
     m_updateTimer->start(100);
+
+    connect(this, &ImagesCarousel::imagesLoaded, this, [this]() {
+        _focusCurrImage();
+    });
 }
 
 ImagesCarousel::~ImagesCarousel() {
@@ -44,15 +53,23 @@ ImagesCarousel::~ImagesCarousel() {
     for (auto item : std::as_const(m_imageQueue)) {
         delete item;
     }
+    // memory of items in m_loadedImages managed by Qt parent-child system
+    // ...
     if (m_scrollAnimation) {
         m_scrollAnimation->stop();
         delete m_scrollAnimation;
     }
 }
 
-void ImagesCarousel::appendImage(const QString& path) {
-    ImageLoader* loader = new ImageLoader(path, this);
-    QThreadPool::globalInstance()->start(loader);
+void ImagesCarousel::appendImages(const QStringList& paths) {
+    {
+        QMutexLocker locker(&m_imageCountMutex);
+        m_imageCount += paths.size();
+    }
+    for (const QString& path : paths) {
+        ImageLoader* loader = new ImageLoader(path, this);
+        QThreadPool::globalInstance()->start(loader);
+    }
 }
 
 ImageLoader::ImageLoader(const QString& path, ImagesCarousel* carousel)
@@ -78,18 +95,44 @@ void ImagesCarousel::_addImageToQueue(const ImageData* data) {
 void ImagesCarousel::_updateImages() {
     QMutexLocker locker(&m_queueMutex);
 
+    static const QVector<std::function<bool(const ImageItem*, const ImageItem*)>> cmpFuncs = {
+        [](auto, auto) {
+            return false;
+        },  // None
+        [](auto a, auto b) {
+            return a->getFileName() < b->getFileName();
+        },
+        [](auto a, auto b) {
+            return a->getFileDate() < b->getFileDate();
+        },
+        [](auto a, auto b) {
+            return a->getFileSize() < b->getFileSize();
+        },
+    };
+
     int processCount = 0;
     while (!m_imageQueue.isEmpty() && processCount < 5) {
         ImageItem* item = m_imageQueue.dequeue();
-        ui->scrollAreaWidgetContents->layout()->addWidget(item);
-        m_loadedImages.append(item);
-        // focus first image
-        if (m_loadedImages.size() == 1) {
-            item->setFocus(true);
-        } else {
-            item->setFocus(false);
+
+        // insert into correct position based on sort type and direction
+        // currently O(n^2), but better as O(n * (n + log(n))) with vector and binary search
+        qint64 inserPos = m_loadedImages.size();
+        if (m_sortType != Config::SortType::None) {
+            for (auto it = m_loadedImages.rbegin();
+                 it != m_loadedImages.rend() &&
+                 cmpFuncs[static_cast<int>(m_sortType)](*it, item) == m_sortReverse;
+                 ++it, --inserPos);
         }
+        m_loadedImages.insert(inserPos, item);
+        m_imagesLayout->insertWidget(inserPos, item);
         processCount++;
+    }
+
+    {
+        QMutexLocker countLocker(&m_imageCountMutex);
+        if (m_loadedImages.size() >= m_imageCount) {
+            emit imagesLoaded();
+        }
     }
 }
 
@@ -101,8 +144,7 @@ void ImageLoader::run() {
                               Q_ARG(const ImageData*, data));
 }
 
-ImageData::ImageData(const QString& p, const int initWidth, const int initHeight) : path(p) {
-    path = p;
+ImageData::ImageData(const QString& p, const int initWidth, const int initHeight) : file(p) {
     if (!pixmap.load(p)) {
         warn(QString("Failed to load image from path: %1").arg(p));
     }
@@ -137,11 +179,16 @@ void ImagesCarousel::focusPrevImage() {
 }
 
 void ImagesCarousel::_unfocusCurrImage() {
+    // bound check was (or should) done by caller
     m_loadedImages[m_currentIndex]->setFocus(false);
 }
 
 void ImagesCarousel::_focusCurrImage() {
+    // bound check was (or should) done by caller
     m_loadedImages[m_currentIndex]->setFocus(true);
+    emit imageFocused(m_loadedImages[m_currentIndex]->getFileFullPath(),
+                      m_currentIndex,
+                      m_loadedImages.size());
     auto hScrollBar  = ui->scrollArea->horizontalScrollBar();
     int spacing      = ui->scrollAreaWidgetContents->layout()->spacing();
     int centerOffset = (m_itemWidth + spacing) * m_currentIndex + m_itemFocusWidth / 2 - spacing;

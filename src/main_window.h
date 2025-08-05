@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 19:53:51
+ * @LastEditTime: 2025-08-06 00:47:04
  * @Description: MainWindow implementation.
  */
 #ifndef MAINWINDOW_H
@@ -36,6 +36,9 @@ class MainWindow : public QMainWindow {
 
   private:
     void _setupUI();
+
+  private slots:
+    void _onImageFocused(const QString &path, const int index, const int count);
 
   private:
     Ui::MainWindow *ui;
