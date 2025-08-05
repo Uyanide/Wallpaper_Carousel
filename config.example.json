@@ -1,17 +1,18 @@
 {
-    "wallpaper": {
-        "paths": [
-            "~/Pictures/116327446_p0.jpg"
-        ],
-        "dirs": [
-            "~/.config/backgrounds"
-        ],
-        "excludes": [
-            "~/.config/backgrounds/nao-start-crop-adjusted.jpg",
-            "~/.config/backgrounds/README.md"
-        ]
-    },
-    "actions": {
-        "confirm": "~/.scripts/change_wallpaper.sh <path> <color>"
-    }
+  "wallpaper": {
+    "paths": [
+      "~/Pictures/116327446_p0.jpg"
+    ],
+    "dirs": [
+      "~/.config/backgrounds"
+    ],
+    "excludes": [
+      "~/.config/backgrounds/nao-start-crop-adjusted.jpg",
+      "~/.config/backgrounds/miku-gate.jpg",
+      "~/.config/backgrounds/README.md"
+    ]
+  },
+  "actions": {
+    "confirm": "~/.scripts/change-wallpaper.fish \"%1\""
+  }
 }

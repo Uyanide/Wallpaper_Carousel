@@ -6,6 +6,8 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+set(CMAKE_AUTOUIC_SEARCH_PATHS src/designer)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -14,19 +16,19 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
+    src/main.cpp
+    src/main_window.cpp
+    src/main_window.h
+    src/designer/main_window.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(wallpaper_chooser
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        images_carousel.h images_carousel.cpp images_carousel.ui
-        config.h config.cpp
-        logger.h
+        src/images_carousel.h src/images_carousel.cpp src/designer/images_carousel.ui
+        src/config.h src/config.cpp
+        src/logger.h
     )
     # Define target properties for Android with Qt 6 as:
     #    set_property(TARGET wallpaper_chooser APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -48,7 +50,7 @@ endif()
 
 target_link_libraries(wallpaper_chooser PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
-target_include_directories(wallpaper_chooser PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(wallpaper_chooser PRIVATE src)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

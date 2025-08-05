@@ -1,14 +1,11 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-05 12:14:04
- * @Description:
+ * @LastEditTime: 2025-08-05 17:26:25
+ * @Description: Configuration manager.
  */
 #ifndef CONFIG_H
 #define CONFIG_H
-
-#include <qcontainerfwd.h>
-#include <qtypes.h>
 
 #include <QObject>
 #include <QString>
@@ -28,6 +25,8 @@ class Config : public QObject {
 
     [[nodiscard]] qint64 getWallpaperCount() const { return m_wallpapers.size(); }
 
+    [[nodiscard]] const QString& getActionsConfirm() const { return m_configItems.actionsConfirm; }
+
     static const QString s_DefaultConfigFileName;
 
   private:
@@ -40,6 +39,7 @@ class Config : public QObject {
         QStringList wallpaperPaths;
         QStringList wallpaperDirs;
         QStringList wallpaperExcludes;
+        QString actionsConfirm;
     } m_configItems;
 
     QStringList m_wallpapers;

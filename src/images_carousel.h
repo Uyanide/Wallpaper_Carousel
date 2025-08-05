@@ -1,8 +1,8 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-05 16:49:22
- * @Description:
+ * @LastEditTime: 2025-08-05 17:25:34
+ * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
 #define IMAGES_CAROUSEL_H
@@ -42,6 +42,10 @@ class ImageItem : public QLabel {
                        const int itemFocusHeight,
                        QWidget* parent = nullptr);
 
+    [[nodiscard]] const QString& getPath() const { return m_data->path; }
+
+    [[nodiscard]] const QPixmap& getPixmap() const { return m_data->pixmap; }
+
   public slots:
     void focusImage();
     void unfocusImage();
@@ -80,6 +84,13 @@ class ImagesCarousel : public QWidget {
     static constexpr int s_itemFocusHeight   = 300;
     static constexpr int s_animationDuration = 300;
 
+    [[nodiscard]] QString getCurrentImagePath() const {
+        if (m_currentIndex < 0 || m_currentIndex >= m_loadedImages.size()) {
+            return "";
+        }
+        return m_loadedImages[m_currentIndex]->getPath();
+    }
+
   public slots:
     void addImageToQueue(const ImageData* data);
     void appendImage(const QString& path);
@@ -99,9 +110,6 @@ class ImagesCarousel : public QWidget {
     QTimer* m_updateTimer;
     int m_currentIndex = 0;
     QPropertyAnimation* m_scrollAnimation;
-
-  signals:
-    void imageLoaded(ImageData* imageData);
 };
 
 class ImagesCarouselScrollArea : public QScrollArea {

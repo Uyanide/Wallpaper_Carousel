@@ -1,8 +1,9 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 10:43:31
- * @LastEditTime: 2025-08-05 11:49:27
- * @Description:
+ * @LastEditTime: 2025-08-05 17:25:18
+ * @Description: A simple logger for general use.
+ *               g_logStream must be defined somewhere else in the project.
  */
 #ifndef GENERAL_LOGGER_H
 #define GENERAL_LOGGER_H

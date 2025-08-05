@@ -1,16 +1,21 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 16:51:52
- * @Description:
+ * @LastEditTime: 2025-08-05 17:40:35
+ * @Description: MainWindow implementation.
  */
-#include "mainwindow.h"
+#include "main_window.h"
 
 #include <QDir>
 #include <QKeyEvent>
+#include <QProcess>
 #include <QPushButton>
 
-#include "./ui_mainwindow.h"
+#include "./ui_main_window.h"
+#include "images_carousel.h"
+#include "logger.h"
+
+using namespace GeneralLogger;
 
 MainWindow::MainWindow(const QString &configDir, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -52,6 +57,26 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 
 void MainWindow::onConfirm() {
     close();
+    const auto path = ui->carousel->getCurrentImagePath();
+    if (path.isEmpty()) {
+        warn("No image selected");
+        return;
+    }
+    info(QString("Selected image: %1").arg(path));
+    const auto cmdOrig = m_config->getActionsConfirm();
+    if (cmdOrig.isEmpty()) {
+        warn("No action defined for confirmation");
+        return;
+    }
+    const auto cmd = cmdOrig.arg(path);
+    info(QString("Executing command: %1").arg(cmd));
+
+    const auto arguments = QProcess::splitCommand(cmd);
+
+    if (QProcess::execute(arguments.first(), arguments.mid(1))) {
+        error(QString("Failed to execute command: %1").arg(cmd));
+        return;
+    }
 }
 
 void MainWindow::onCancel() {

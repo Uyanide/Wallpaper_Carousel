@@ -1,8 +1,8 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-05 12:17:37
- * @Description:
+ * @LastEditTime: 2025-08-05 17:26:33
+ * @Description: Configuration manager.
  */
 #include "config.h"
 
@@ -66,12 +66,24 @@ void Config::_loadConfig(const QString &configPath) {
     const auto jsonObj = jsonDoc.object();
     if (!jsonObj.contains("wallpaper") || !jsonObj["wallpaper"].isObject()) {
         warn("Key 'wallpaper' not fount or not an object in config");
-        return;
+    } else {
+        const auto wallpaperObj = jsonObj.value("wallpaper").toObject();
+        parseJsonArray(wallpaperObj, "paths", m_configItems.wallpaperPaths);
+        parseJsonArray(wallpaperObj, "dirs", m_configItems.wallpaperDirs);
+        parseJsonArray(wallpaperObj, "excludes", m_configItems.wallpaperExcludes);
     }
-    const auto wallpaperObj = jsonObj.value("wallpaper").toObject();
-    parseJsonArray(wallpaperObj, "paths", m_configItems.wallpaperPaths);
-    parseJsonArray(wallpaperObj, "dirs", m_configItems.wallpaperDirs);
-    parseJsonArray(wallpaperObj, "excludes", m_configItems.wallpaperExcludes);
+
+    if (!jsonObj.contains("actions") || !jsonObj["actions"].isObject()) {
+        warn("Key 'actions' not found or not an object in config");
+    } else {
+        const auto actionsObj = jsonObj.value("actions").toObject();
+        if (actionsObj.contains("confirm") && actionsObj["confirm"].isString()) {
+            m_configItems.actionsConfirm = ::expandPath(actionsObj["confirm"].toString());
+            info(QString("Action on confirm: %1").arg(m_configItems.actionsConfirm));
+        } else {
+            warn("Key 'confirm' not found or not a string in 'actions'");
+        }
+    }
 }
 
 void Config::_loadWallpapers() {

@@ -1,8 +1,8 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 12:01:25
- * @Description:
+ * @LastEditTime: 2025-08-05 17:23:41
+ * @Description: MainWindow implementation.
  */
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H

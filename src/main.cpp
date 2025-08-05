@@ -1,8 +1,8 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 12:16:35
- * @Description:
+ * @LastEditTime: 2025-08-05 17:34:37
+ * @Description: Entry point.
  */
 #include <qapplication.h>
 
@@ -12,7 +12,7 @@
 #include <QTextStream>
 
 #include "logger.h"
-#include "mainwindow.h"
+#include "main_window.h"
 
 QTextStream GeneralLogger::g_logStream(stderr);
 
