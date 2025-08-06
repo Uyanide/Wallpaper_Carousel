@@ -1,10 +1,4 @@
 #!/bin/env bash
-###
- # @Author: Uyanide pywang0608@foxmail.com
- # @Date: 2025-08-06 01:43:32
- # @LastEditTime: 2025-08-06 02:28:12
- # @Description:
-###
 
 path="$(dirname "$(readlink -f "$0")")"
 

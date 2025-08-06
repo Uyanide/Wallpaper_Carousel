@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 02:12:46
+ * @LastEditTime: 2025-08-06 22:44:49
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -152,8 +152,15 @@ void ImagesCarousel::_updateImages() {
             for (auto it = m_loadedImages.rbegin();
                  it != m_loadedImages.rend() &&
                  cmpFuncs[static_cast<int>(m_sortType)](*it, item) == m_sortReverse;
-                 ++it, --inserPos);
+                 (*it)->m_index++, ++it, --inserPos);
         }
+        item->m_index = inserPos;
+        connect(item, &ImageItem::clicked, this, [this](int index) {
+            // if (m_suppressAutoFocus) return;
+            _unfocusCurrImage();
+            m_currentIndex = index;
+            _focusCurrImage();
+        });
         m_loadedImages.insert(inserPos, item);
         m_imagesLayout->insertWidget(inserPos, item);
         processCount++;
@@ -263,6 +270,7 @@ void ImagesCarousel::_onScrollBarValueChanged(int value) {
     int centerOffset = (value + m_itemFocusWidth / 2);
     int itemOffset   = m_itemWidth + ui->scrollAreaWidgetContents->layout()->spacing();
     int index        = centerOffset / itemOffset;
+
     if (index < 0 || index >= m_loadedImages.size()) {
         return;  // Out of bounds
     }

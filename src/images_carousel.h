@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 02:10:43
+ * @LastEditTime: 2025-08-06 22:40:18
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
@@ -67,14 +67,24 @@ class ImageItem : public QLabel {
 
     [[nodiscard]] qint64 getFileSize() const { return m_data->file.size(); }
 
-  public:
     void setFocus(bool focus = true);
+
+    int m_index = 0;
+
+  protected:
+    void mousePressEvent(QMouseEvent* event) override {
+        emit clicked(m_index);
+        QLabel::mousePressEvent(event);
+    }
 
   private:
     const ImageData* m_data;
     QSize m_itemSize;
     QSize m_itemFocusSize;
     QPropertyAnimation* m_scaleAnimation = nullptr;
+
+  signals:
+    void clicked(int index);
 };
 
 class ImageLoader : public QRunnable {
