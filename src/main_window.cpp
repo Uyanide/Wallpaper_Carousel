@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-06 02:13:59
+ * @LastEditTime: 2025-08-06 02:16:25
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -73,10 +73,11 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 void MainWindow::wheelEvent(QWheelEvent *event) {
     if (event->angleDelta().y() > 0) {
         m_carousel->focusPrevImage();
-    } else {
+    } else if (event->angleDelta().y() < 0) {
         m_carousel->focusNextImage();
+    } else {
+        QMainWindow::wheelEvent(event);
     }
-    event->accept();
 }
 
 void MainWindow::onConfirm() {
