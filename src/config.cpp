@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-06 00:23:54
+ * @LastEditTime: 2025-08-06 02:34:10
  * @Description: Configuration manager.
  */
 #include "config.h"
@@ -227,7 +227,7 @@ bool Config::isValidImageFile(const QString &filePath) {
     }
     // check if normal file
     QFileInfo fileInfo(filePath);
-    if (!fileInfo.isFile() || !fileInfo.isReadable()) {
+    if (!(fileInfo.isFile() || fileInfo.isSymbolicLink()) || !fileInfo.isReadable()) {
         warn(QString("Invalid file: %1").arg(filePath));
         return false;
     }
