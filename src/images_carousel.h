@@ -1,11 +1,13 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 22:40:18
+ * @LastEditTime: 2025-08-07 00:27:03
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
 #define IMAGES_CAROUSEL_H
+
+#include <qtmetamacros.h>
 
 #include <QFileInfo>
 #include <QHBoxLayout>
@@ -36,7 +38,7 @@ class ImagesCarouselScrollArea;
  */
 struct ImageData {
     QFileInfo file;
-    QPixmap pixmap;
+    QImage image;
 
     explicit ImageData(const QString& p, const int initWidth, const int initHeight);
 };
@@ -63,7 +65,7 @@ class ImageItem : public QLabel {
 
     [[nodiscard]] QDateTime getFileDate() const { return m_data->file.lastModified(); }
 
-    [[nodiscard]] const QPixmap& getPixmap() const { return m_data->pixmap; }
+    [[nodiscard]] const QImage& getThumbnail() const { return m_data->image; }
 
     [[nodiscard]] qint64 getFileSize() const { return m_data->file.size(); }
 
@@ -117,6 +119,7 @@ class ImagesCarousel : public QWidget {
                             QWidget* parent = nullptr);
     ~ImagesCarousel();
 
+    static constexpr int s_debounceInterval  = 200;
     static constexpr int s_animationDuration = 300;
 
     [[nodiscard]] QString getCurrentImagePath() const {
@@ -140,22 +143,19 @@ class ImagesCarousel : public QWidget {
   private slots:
     void _unfocusCurrImage();
     void _onScrollBarValueChanged(int value);
+    void _onItemClicked(int index);
 
   public:
     void
     appendImages(const QStringList& paths);
 
   private:
-    Q_INVOKABLE void _addImageToQueue(const ImageData* data);
     void _focusCurrImage();
-    void _updateImages();
+    Q_INVOKABLE void _insertImage(const ImageData* item);
 
   private:
     Ui::ImagesCarousel* ui;
-    QMutex m_queueMutex;
-    QQueue<ImageItem*> m_imageQueue;
     QList<ImageItem*> m_loadedImages;
-    QTimer* m_updateTimer;
     int m_currentIndex                    = 0;
     QPropertyAnimation* m_scrollAnimation = nullptr;
     QHBoxLayout* m_imagesLayout           = nullptr;

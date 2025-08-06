@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-06 02:34:10
+ * @LastEditTime: 2025-08-07 00:09:51
  * @Description: Configuration manager.
  */
 #include "config.h"
@@ -211,6 +211,7 @@ bool Config::isValidImageFile(const QString &filePath) {
     static const QStringList validExtensions = {
         ".jpg",
         ".jpeg",
+        ".jfif",
         ".png",
         ".bmp",
         ".gif",

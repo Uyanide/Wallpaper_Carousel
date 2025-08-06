@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 22:44:49
+ * @LastEditTime: 2025-08-07 00:22:29
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -9,7 +9,9 @@
 #include <pthread.h>
 #include <qboxlayout.h>
 #include <qdebug.h>
+#include <qnamespace.h>
 #include <qobject.h>
+#include <qpixmap.h>
 
 #include <QLabel>
 #include <QMetaObject>
@@ -31,7 +33,6 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
                                QWidget* parent)
     : QWidget(parent),
       ui(new Ui::ImagesCarousel),
-      m_updateTimer(new QTimer(this)),
       m_itemWidth(itemWidth),
       m_itemHeight(static_cast<int>(itemWidth / itemAspectRatio)),
       m_itemFocusWidth(itemFocusWidth),
@@ -44,23 +45,19 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
     m_imagesLayout = dynamic_cast<QHBoxLayout*>(ui->scrollAreaWidgetContents->layout());
 
     // Load initial images
-    connect(m_updateTimer,
-            &QTimer::timeout,
-            this,
-            &ImagesCarousel::_updateImages);
     connect(this,
             &ImagesCarousel::imagesLoaded,
             this,
             [this]() {
                 _focusCurrImage();
+                // exit(0); // for speed test
                 disconnect(this, &ImagesCarousel::imagesLoaded, this, nullptr);
             });
-    m_updateTimer->start(100);
 
     // Auto focus when scrolling
     m_scrollDebounceTimer = new QTimer(this);
     m_scrollDebounceTimer->setSingleShot(true);
-    m_scrollDebounceTimer->setInterval(200);
+    m_scrollDebounceTimer->setInterval(s_debounceInterval);
     connect(m_scrollDebounceTimer,
             &QTimer::timeout,
             this,
@@ -81,9 +78,6 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
 
 ImagesCarousel::~ImagesCarousel() {
     delete ui;
-    for (auto item : std::as_const(m_imageQueue)) {
-        delete item;
-    }
     // memory of items in m_loadedImages managed by Qt parent-child system
     // ...
     if (m_scrollAnimation) {
@@ -111,20 +105,14 @@ ImageLoader::ImageLoader(const QString& path, ImagesCarousel* carousel)
     setAutoDelete(true);
 }
 
-void ImagesCarousel::_addImageToQueue(const ImageData* data) {
-    QMutexLocker locker(&m_queueMutex);
-    auto imageItem = new ImageItem(
+void ImagesCarousel::_insertImage(const ImageData* data) {
+    auto item = new ImageItem(
         data,
         m_itemWidth,
         m_itemHeight,
         m_itemFocusWidth,
         m_itemFocusHeight,
         this);
-    m_imageQueue.enqueue(imageItem);
-}
-
-void ImagesCarousel::_updateImages() {
-    QMutexLocker locker(&m_queueMutex);
 
     static const QVector<std::function<bool(const ImageItem*, const ImageItem*)>> cmpFuncs = {
         [](auto, auto) {
@@ -141,30 +129,22 @@ void ImagesCarousel::_updateImages() {
         },
     };
 
-    int processCount = 0;
-    while (!m_imageQueue.isEmpty() && processCount < 5) {
-        ImageItem* item = m_imageQueue.dequeue();
-
-        // insert into correct position based on sort type and direction
-        // currently O(n^2), but better as O(n * (n + log(n))) with vector and binary search
-        qint64 inserPos = m_loadedImages.size();
-        if (m_sortType != Config::SortType::None) {
-            for (auto it = m_loadedImages.rbegin();
-                 it != m_loadedImages.rend() &&
-                 cmpFuncs[static_cast<int>(m_sortType)](*it, item) == m_sortReverse;
-                 (*it)->m_index++, ++it, --inserPos);
-        }
-        item->m_index = inserPos;
-        connect(item, &ImageItem::clicked, this, [this](int index) {
-            // if (m_suppressAutoFocus) return;
-            _unfocusCurrImage();
-            m_currentIndex = index;
-            _focusCurrImage();
-        });
-        m_loadedImages.insert(inserPos, item);
-        m_imagesLayout->insertWidget(inserPos, item);
-        processCount++;
+    // insert into correct position based on sort type and direction
+    // currently O(n^2), but better as O(n * (n + log(n))) with vector and binary search
+    qint64 inserPos = m_loadedImages.size();
+    if (m_sortType != Config::SortType::None) {
+        for (auto it = m_loadedImages.rbegin();
+             it != m_loadedImages.rend() &&
+             cmpFuncs[static_cast<int>(m_sortType)](*it, item) == m_sortReverse;
+             (*it)->m_index++, ++it, --inserPos);
     }
+    item->m_index = inserPos;
+    connect(item,
+            &ImageItem::clicked,
+            this,
+            &ImagesCarousel::_onItemClicked);
+    m_loadedImages.insert(inserPos, item);
+    m_imagesLayout->insertWidget(inserPos, item);
 
     {
         QMutexLocker countLocker(&m_imageCountMutex);
@@ -177,23 +157,23 @@ void ImagesCarousel::_updateImages() {
 void ImageLoader::run() {
     auto data = new ImageData(m_path, m_initWidth, m_initHeight);
     QMetaObject::invokeMethod(m_carousel,
-                              "_addImageToQueue",
+                              "_insertImage",
                               Qt::QueuedConnection,
                               Q_ARG(const ImageData*, data));
 }
 
 ImageData::ImageData(const QString& p, const int initWidth, const int initHeight) : file(p) {
-    if (!pixmap.load(p)) {
+    if (!image.load(p)) {
         warn(QString("Failed to load image from path: %1").arg(p));
     }
     // resize in "cover" mode
     const QSize targetSize(initWidth, initHeight);
-    pixmap = pixmap.scaled(targetSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    image = image.scaled(targetSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
 
     // Crop to center
-    int x  = (pixmap.width() - targetSize.width()) / 2;
-    int y  = (pixmap.height() - targetSize.height()) / 2;
-    pixmap = pixmap.copy(x, y, targetSize.width(), targetSize.height());
+    int x = (image.width() - targetSize.width()) / 2;
+    int y = (image.height() - targetSize.height()) / 2;
+    image = image.copy(x, y, targetSize.width(), targetSize.height());
 }
 
 void ImagesCarousel::focusNextImage() {
@@ -242,7 +222,7 @@ void ImagesCarousel::_focusCurrImage() {
     }
 
     m_scrollAnimation = new QPropertyAnimation(hScrollBar, "value");
-    m_scrollAnimation->setDuration(300);
+    m_scrollAnimation->setDuration(s_animationDuration);
     m_scrollAnimation->setStartValue(hScrollBar->value());
     m_scrollAnimation->setEndValue(leftOffset);
     m_scrollAnimation->setEasingCurve(QEasingCurve::OutCubic);
@@ -282,6 +262,13 @@ void ImagesCarousel::_onScrollBarValueChanged(int value) {
     _focusCurrImage();
 }
 
+void ImagesCarousel::_onItemClicked(int index) {
+    // if (m_suppressAutoFocus) return;
+    _unfocusCurrImage();
+    m_currentIndex = index;
+    _focusCurrImage();
+}
+
 ImageItem::ImageItem(const ImageData* data,
                      const int itemWidth,
                      const int itemHeight,
@@ -293,7 +280,7 @@ ImageItem::ImageItem(const ImageData* data,
       m_itemSize(itemWidth, itemHeight),
       m_itemFocusSize(itemFocusWidth, itemFocusHeight) {
     setScaledContents(true);
-    setPixmap(data->pixmap);
+    setPixmap(QPixmap::fromImage(data->image));
     setFixedSize(itemWidth, itemHeight);
 }
 
