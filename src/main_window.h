@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-06 00:47:04
+ * @LastEditTime: 2025-08-06 02:13:47
  * @Description: MainWindow implementation.
  */
 #ifndef MAINWINDOW_H
@@ -33,6 +33,7 @@ class MainWindow : public QMainWindow {
 
   protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
   private:
     void _setupUI();

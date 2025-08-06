@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 01:32:56
+ * @LastEditTime: 2025-08-06 02:10:43
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
@@ -24,7 +24,11 @@
 
 #include "config.h"
 
+class ImageData;
+class ImageItem;
+class ImageLoader;
 class ImagesCarousel;
+class ImagesCarouselScrollArea;
 
 /**
  * @brief Data structure to hold image information
@@ -146,10 +150,11 @@ class ImagesCarousel : public QWidget {
     QPropertyAnimation* m_scrollAnimation = nullptr;
     QHBoxLayout* m_imagesLayout           = nullptr;
     QMutex m_imageCountMutex;
-    int m_imageCount              = 0;
-    bool m_suppressAutoFocus      = false;
-    int m_pendingScrollValue      = 0;
-    QTimer* m_scrollDebounceTimer = nullptr;
+    int m_imageCount                       = 0;
+    bool m_suppressAutoFocus               = false;
+    int m_pendingScrollValue               = 0;
+    QTimer* m_scrollDebounceTimer          = nullptr;
+    ImagesCarouselScrollArea* m_scrollArea = nullptr;
 
   signals:
     void imageFocused(const QString& path, const int index, const int count);
@@ -166,14 +171,35 @@ class ImagesCarouselScrollArea : public QScrollArea {
         // setWidgetResizable(true);
     }
 
+    void setBlockInput(bool block) { m_blockInput = block; }
+
   protected:
     void keyPressEvent(QKeyEvent* event) override {
+        if (m_blockInput) {
+            event->ignore();
+            return;
+        }
         if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right) {
             event->ignore();
         } else {
             QScrollArea::keyPressEvent(event);
         }
     }
+
+    void wheelEvent(QWheelEvent* event) override {
+        if (m_blockInput) {
+            event->ignore();
+            return;
+        }
+        if (event->angleDelta().y() != 0) {
+            event->ignore();
+        } else {
+            QScrollArea::wheelEvent(event);
+        }
+    }
+
+  private:
+    bool m_blockInput = false;
 };
 
 #endif  // IMAGES_CAROUSEL_H

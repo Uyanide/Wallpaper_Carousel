@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-06 01:27:49
+ * @LastEditTime: 2025-08-06 02:12:46
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -39,6 +39,7 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
       m_sortType(sortType),
       m_sortReverse(sortReverse) {
     ui->setupUi(this);
+    m_scrollArea = dynamic_cast<ImagesCarouselScrollArea*>(ui->scrollArea);
 
     m_imagesLayout = dynamic_cast<QHBoxLayout*>(ui->scrollAreaWidgetContents->layout());
 
@@ -245,8 +246,10 @@ void ImagesCarousel::_focusCurrImage() {
             this,
             [this]() {
                 m_suppressAutoFocus = false;
+                m_scrollArea->setBlockInput(false);
             });
     m_suppressAutoFocus = true;
+    m_scrollArea->setBlockInput(true);
     m_scrollAnimation->start();
 }
 
