@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-06 02:13:47
+ * @LastEditTime: 2025-08-07 01:08:12
  * @Description: MainWindow implementation.
  */
 #ifndef MAINWINDOW_H
@@ -11,6 +11,7 @@
 
 #include "config.h"
 #include "images_carousel.h"
+#include "loading_indicator.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -40,10 +41,14 @@ class MainWindow : public QMainWindow {
 
   private slots:
     void _onImageFocused(const QString &path, const int index, const int count);
+    void _onLoadingStarted(const qsizetype amount);
+    void _onLoadingCompleted(const qsizetype amount);
 
   private:
     Ui::MainWindow *ui;
-    ImagesCarousel *m_carousel = nullptr;
+    ImagesCarousel *m_carousel           = nullptr;
+    LoadingIndicator *m_loadingIndicator = nullptr;
+    int m_carouselIndex, m_loadingIndicatorIndex;
     const Config &m_config;
 };
 #endif  // MAINWINDOW_H

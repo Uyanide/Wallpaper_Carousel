@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 00:27:03
+ * @LastEditTime: 2025-08-07 00:52:14
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
@@ -144,6 +144,7 @@ class ImagesCarousel : public QWidget {
     void _unfocusCurrImage();
     void _onScrollBarValueChanged(int value);
     void _onItemClicked(int index);
+    void _onInitImagesLoaded();
 
   public:
     void
@@ -168,7 +169,9 @@ class ImagesCarousel : public QWidget {
 
   signals:
     void imageFocused(const QString& path, const int index, const int count);
-    void imagesLoaded();
+    void loadingStarted(const qsizetype amount);
+    void loadingCompleted(const qsizetype amount);
+    void imageLoaded(const qsizetype count);
 };
 
 class ImagesCarouselScrollArea : public QScrollArea {

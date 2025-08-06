@@ -29,6 +29,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         src/images_carousel.h src/images_carousel.cpp src/designer/images_carousel.ui
         src/config.h src/config.cpp
         src/logger.h
+        src/loading_indicator.h src/loading_indicator.cpp src/designer/loading_indicator.ui
     )
     # Define target properties for Android with Qt 6 as:
     #    set_property(TARGET wallpaper_chooser APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

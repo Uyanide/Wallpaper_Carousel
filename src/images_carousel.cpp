@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 00:22:29
+ * @LastEditTime: 2025-08-07 00:50:11
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -46,13 +46,9 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
 
     // Load initial images
     connect(this,
-            &ImagesCarousel::imagesLoaded,
+            &ImagesCarousel::loadingCompleted,
             this,
-            [this]() {
-                _focusCurrImage();
-                // exit(0); // for speed test
-                disconnect(this, &ImagesCarousel::imagesLoaded, this, nullptr);
-            });
+            &ImagesCarousel::_onInitImagesLoaded);
 
     // Auto focus when scrolling
     m_scrollDebounceTimer = new QTimer(this);
@@ -76,6 +72,15 @@ ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
             });
 }
 
+void ImagesCarousel::_onInitImagesLoaded() {
+    disconnect(this, &ImagesCarousel::loadingCompleted, this, &ImagesCarousel::_onInitImagesLoaded);
+    if (m_loadedImages.isEmpty()) {
+        return;
+    }
+    m_currentIndex = 0;
+    _focusCurrImage();
+}
+
 ImagesCarousel::~ImagesCarousel() {
     delete ui;
     // memory of items in m_loadedImages managed by Qt parent-child system
@@ -91,6 +96,7 @@ void ImagesCarousel::appendImages(const QStringList& paths) {
         QMutexLocker locker(&m_imageCountMutex);
         m_imageCount += paths.size();
     }
+    emit loadingStarted(paths.size());
     for (const QString& path : paths) {
         ImageLoader* loader = new ImageLoader(path, this);
         QThreadPool::globalInstance()->start(loader);
@@ -146,10 +152,11 @@ void ImagesCarousel::_insertImage(const ImageData* data) {
     m_loadedImages.insert(inserPos, item);
     m_imagesLayout->insertWidget(inserPos, item);
 
+    emit imageLoaded(m_loadedImages.size());
     {
         QMutexLocker countLocker(&m_imageCountMutex);
         if (m_loadedImages.size() >= m_imageCount) {
-            emit imagesLoaded();
+            emit loadingCompleted(m_loadedImages.size());
         }
     }
 }
@@ -266,6 +273,9 @@ void ImagesCarousel::_onItemClicked(int index) {
     // if (m_suppressAutoFocus) return;
     _unfocusCurrImage();
     m_currentIndex = index;
+    if (index < 0 || index >= m_loadedImages.size()) {
+        return;  // Out of bounds
+    }
     _focusCurrImage();
 }
 

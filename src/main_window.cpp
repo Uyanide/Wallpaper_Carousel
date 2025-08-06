@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-06 02:16:25
+ * @LastEditTime: 2025-08-07 01:08:55
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -33,7 +33,8 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::_setupUI() {
-    // insert images carousel
+
+    // create images carousel
     m_carousel = new ImagesCarousel(
         m_config.getStyleAspectRatio(),
         m_config.getStyleImageWidth(),
@@ -42,14 +43,40 @@ void MainWindow::_setupUI() {
         m_config.isSortReverse(),
         this);
     ui->mainLayout->insertWidget(2, m_carousel);
-    connect(m_carousel, &ImagesCarousel::imageFocused, this, &MainWindow::_onImageFocused);
+    connect(m_carousel,
+            &ImagesCarousel::imageFocused,
+            this,
+            &MainWindow::_onImageFocused);
+    m_carouselIndex = ui->stackedWidget->addWidget(m_carousel);
+
+    // create loading indicator
+    m_loadingIndicator = new LoadingIndicator(this);
+    connect(m_carousel,
+            &ImagesCarousel::loadingStarted,
+            this,
+            &MainWindow::_onLoadingStarted);
+    connect(m_carousel,
+            &ImagesCarousel::loadingCompleted,
+            this,
+            &MainWindow::_onLoadingCompleted);
+    connect(m_carousel,
+            &ImagesCarousel::imageLoaded,
+            m_loadingIndicator,
+            &LoadingIndicator::setValue);
+    m_loadingIndicatorIndex = ui->stackedWidget->addWidget(m_loadingIndicator);
 
     // set window size
     setMinimumSize(m_config.getStyleWindowWidth(), m_config.getStyleWindowHeight());
     setMaximumSize(m_config.getStyleWindowWidth(), m_config.getStyleWindowHeight());
 
-    connect(ui->confirmButton, &QPushButton::clicked, this, &MainWindow::onConfirm);
-    connect(ui->cancelButton, &QPushButton::clicked, this, &MainWindow::onCancel);
+    connect(ui->confirmButton,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::onConfirm);
+    connect(ui->cancelButton,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::onCancel);
     ui->confirmButton->setFocusPolicy(Qt::NoFocus);
     ui->cancelButton->setFocusPolicy(Qt::NoFocus);
 
@@ -110,4 +137,13 @@ void MainWindow::onCancel() {
 
 void MainWindow::_onImageFocused(const QString &path, const int index, const int count) {
     ui->topLabel->setText(QString("%1 (%2/%3)").arg(splitNameFromPath(path)).arg(index + 1).arg(count));
+}
+
+void MainWindow::_onLoadingStarted(const qsizetype amount) {
+    m_loadingIndicator->setMaximum(amount);
+    ui->stackedWidget->setCurrentIndex(m_loadingIndicatorIndex);
+}
+
+void MainWindow::_onLoadingCompleted(const qsizetype amount) {
+    ui->stackedWidget->setCurrentIndex(m_carouselIndex);
 }
