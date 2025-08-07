@@ -1,13 +1,14 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-07 01:12:37
- * @LastEditTime: 2025-08-07 01:55:56
+ * @LastEditTime: 2025-08-07 21:11:22
  * @Description: Implementation of logger.
  */
 #include "logger.h"
 
 #include <unistd.h>
 
+#include <QCoreApplication>
 #include <QObject>
 #include <QProcessEnvironment>
 #include <QString>
@@ -18,7 +19,6 @@
 #define ENSURE_ENABLED return;
 #else
 #define ENSURE_ENABLED
-static QTextStream s_logStream(stderr);
 #endif
 
 Logger* Logger::instance(FILE* stream) {
@@ -28,6 +28,8 @@ Logger* Logger::instance(FILE* stream) {
             stream = stderr;  // Default to stderr if no stream provided
         }
         logger = new Logger(stream);
+        // Ensure logger runs in the main thread
+        logger->moveToThread(QCoreApplication::instance()->thread());
     }
     return logger;
 }
@@ -49,10 +51,10 @@ void Logger::_log(
     const GeneralLogger::LogIndent indent) {
     ENSURE_ENABLED
 
-    s_logStream << levelColorString << levelString << ' ';
-    for (qint32 i = 0; i < indent; i++) s_logStream << "  ";
-    s_logStream << textColorString << msg << (textColorString.isEmpty() ? "\n" : "\033[0m\n");
-    s_logStream.flush();
+    m_logStream << levelColorString << levelString << ' ';
+    for (qint32 i = 0; i < indent; i++) m_logStream << "  ";
+    m_logStream << textColorString << msg << (textColorString.isEmpty() ? "\n" : "\033[0m\n");
+    m_logStream.flush();
 }
 
 bool Logger::isColored() {

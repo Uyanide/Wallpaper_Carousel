@@ -1,31 +1,29 @@
 {
-  "wallpaper": {
-    "paths": [
-      "~/Pictures/116327446_p0.jpg"
-    ],
-    "dirs": [
-      "~/.config/backgrounds",
-      "/media/Beta/3-Anime/图集/绿色健康.2/绿色健康.2",
-      "/media/Beta/壁纸/库"
-    ],
-    "excludes": [
-      "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",
-      "~/.config/backgrounds/miku-gate.jpg",
-      "~/.config/backgrounds/README.md"
-    ]
-  },
-  "actions": {
-    "confirm": "~/.scripts/change-wallpaper.fish \"%1\""
-  },
-  "style": {
-    "aspect_ratio": 1.6,
-    "image_width": 320,
-    "image_focus_width": 480,
-    "window_width": 750,
-    "window_height": 500
-  },
-  "sort": {
-    "type": "name",
-    "reverse": false
-  }
+    "wallpaper": {
+        "paths": [
+            "~/Pictures/116327446_p0.jpg"
+        ],
+        "dirs": [
+            "~/.config/backgrounds"
+        ],
+        "excludes": [
+            "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",
+            "~/.config/backgrounds/miku-gate.jpg",
+            "~/.config/backgrounds/README.md"
+        ]
+    },
+    "actions": {
+        "confirm": "~/.scripts/change-wallpaper.fish \"%1\""
+    },
+    "style": {
+        "aspect_ratio": 1.6,
+        "image_width": 320,
+        "image_focus_width": 480,
+        "window_width": 750,
+        "window_height": 500
+    },
+    "sort": {
+        "type": "name",
+        "reverse": false
+    }
 }
