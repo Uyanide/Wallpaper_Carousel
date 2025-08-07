@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-07 21:27:26
+ * @LastEditTime: 2025-08-07 22:02:55
  * @Description: Configuration manager.
  */
 #include "config.h"
@@ -97,6 +97,12 @@ void Config::_loadConfig(const QString &configPath) {
                  if (val.isDouble() && val.toDouble() > 0) {
                      m_configItems.styleWindowHeight = val.toInt();
                      info(QString("Window height: %1").arg(m_configItems.styleWindowHeight), GeneralLogger::STEP);
+                 }
+             }},
+            {"style.no_loading_screen", "no_loading_screen", [this](const QJsonValue &val) {
+                 if (val.isBool()) {
+                     m_configItems.styleNoLoadingScreen = val.toBool();
+                     info(QString("No loading screen: %1").arg(m_configItems.styleNoLoadingScreen), GeneralLogger::STEP);
                  }
              }},
             {"sort.type", "type", [this](const QJsonValue &val) {

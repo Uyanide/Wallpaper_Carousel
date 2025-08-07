@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-07 01:08:55
+ * @LastEditTime: 2025-08-07 22:03:58
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -140,6 +140,9 @@ void MainWindow::_onImageFocused(const QString &path, const int index, const int
 }
 
 void MainWindow::_onLoadingStarted(const qsizetype amount) {
+    if (m_config.isStyleNoLoadingScreen()) {
+        return;
+    }
     m_loadingIndicator->setMaximum(amount);
     ui->stackedWidget->setCurrentIndex(m_loadingIndicatorIndex);
 }

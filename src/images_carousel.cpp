@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 02:01:23
+ * @LastEditTime: 2025-08-07 22:06:44
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -77,7 +77,6 @@ void ImagesCarousel::_onInitImagesLoaded() {
     if (m_loadedImages.isEmpty()) {
         return;
     }
-    m_currentIndex = 0;
     _focusCurrImage();
 }
 

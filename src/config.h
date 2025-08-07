@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-06 00:23:45
+ * @LastEditTime: 2025-08-07 22:03:05
  * @Description: Configuration manager.
  */
 #ifndef CONFIG_H
@@ -44,6 +44,8 @@ class Config : public QObject {
 
     [[nodiscard]] int getStyleWindowHeight() const { return m_configItems.styleWindowHeight; }
 
+    [[nodiscard]] bool isStyleNoLoadingScreen() const { return m_configItems.styleNoLoadingScreen; }
+
     [[nodiscard]] SortType getSortType() const { return m_configItems.sortType; }
 
     [[nodiscard]] bool isSortReverse() const { return m_configItems.sortReverse; }
@@ -61,13 +63,14 @@ class Config : public QObject {
         QStringList wallpaperDirs;
         QStringList wallpaperExcludes;
         QString actionsConfirm;
-        double styleAspectRatio  = 1.6;
-        int styleImageWidth      = 320;
-        int styleImageFocusWidth = 480;
-        int styleWindowWidth     = 720;
-        int styleWindowHeight    = 500;
-        SortType sortType        = SortType::None;
-        bool sortReverse         = false;
+        double styleAspectRatio   = 1.6;
+        int styleImageWidth       = 320;
+        int styleImageFocusWidth  = 480;
+        int styleWindowWidth      = 720;
+        int styleWindowHeight     = 500;
+        bool styleNoLoadingScreen = false;
+        SortType sortType         = SortType::None;
+        bool sortReverse          = false;
     } m_configItems;
 
     QStringList m_wallpapers;

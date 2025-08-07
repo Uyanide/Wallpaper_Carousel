@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-07 21:25:43
+ * @LastEditTime: 2025-08-07 21:38:26
  * @Description: Entry point.
  */
 #include <qapplication.h>
