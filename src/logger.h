@@ -1,19 +1,17 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 10:43:31
- * @LastEditTime: 2025-08-05 17:25:18
- * @Description: A simple logger for general use.
- *               g_logStream must be defined somewhere else in the project.
+ * @LastEditTime: 2025-08-07 01:55:42
+ * @Description: A simple thread-safe logger for general use.
  */
 #ifndef GENERAL_LOGGER_H
 #define GENERAL_LOGGER_H
 
+#include <QObject>
 #include <QString>
 #include <QTextStream>
 
 namespace GeneralLogger {
-
-inline constexpr const char* colorInfoMsg[]{"\033[32m", "\033[0m", "\033[0m"};
 
 enum LogIndent : qint32 {
     GENERAL = 0,
@@ -21,51 +19,44 @@ enum LogIndent : qint32 {
     DETAIL  = 2,
 };
 
-#ifdef GENERAL_LOGGER_DISABLED
-#define ENSURE_ENABLED return;
-#else
-#define ENSURE_ENABLED
-extern QTextStream g_logStream;
-#endif
+void info(const QString& msg,
+          const LogIndent indent = GENERAL);
 
-inline void
-info(const QString& msg,
-     const LogIndent indent = GENERAL,
-     const bool color       = true) {
-    ENSURE_ENABLED
+void warn(const QString& msg,
+          const LogIndent indent = GENERAL);
 
-    g_logStream << (color ? "\033[92m" : "") << "[INFO] ";
-    for (qint32 i = 0; i < indent; i++) g_logStream << "  ";
-    g_logStream << (color ? colorInfoMsg[indent] : "") << msg << (color ? "\033[0m\n" : "\n");
-    g_logStream.flush();
-}
+void error(const QString& msg,
+           const LogIndent indent = GENERAL);
+}  // namespace GeneralLogger
 
-inline void
-warn(const QString& msg,
-     const LogIndent indent = GENERAL,
-     const bool color       = true) {
-    ENSURE_ENABLED
+class Logger : public QObject {
+    Q_OBJECT
 
-    g_logStream << (color ? "\033[93m" : "") << "[WARN] ";
-    for (uint32_t i = 0; i < indent; i++) g_logStream << "  ";
-    g_logStream << (color ? "\033[33m" : "") << msg << (color ? "\033[0m\n" : "\n");
-    g_logStream.flush();
-}
+  public:
+    static Logger* instance(FILE* stream = nullptr);
 
-inline void
-error(const QString& msg,
-      const LogIndent indent = GENERAL,
-      const bool color       = true) {
-    ENSURE_ENABLED
+    static bool isColored();
 
-    g_logStream << (color ? "\033[91m" : "") << "[ERROR] ";
-    for (uint32_t i = 0; i < indent; i++) g_logStream << "  ";
-    g_logStream << (color ? "\033[31m" : "") << msg << (color ? "\033[0m\n" : "\n");
-    g_logStream.flush();
-}
+  private:
+    explicit Logger(FILE* stream, QObject* parent = nullptr);
 
-#undef ENSURE_ENABLED
+  private slots:
+    void _log(const QString& msg,
+              const QString& levelString,
+              const QString& levelColorString,
+              const QString& textColorString,
+              const GeneralLogger::LogIndent indent);
 
-};  // namespace GeneralLogger
+  private:
+    FILE* m_stream;
+    QTextStream m_logStream;
+
+  signals:
+    void logSig(const QString& msg,
+                const QString& levelString,
+                const QString& levelColorString,
+                const QString& textColorString,
+                const GeneralLogger::LogIndent indent);
+};
 
 #endif  // GENERAL_LOGGER_H

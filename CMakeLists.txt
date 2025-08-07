@@ -28,7 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         src/images_carousel.h src/images_carousel.cpp src/designer/images_carousel.ui
         src/config.h src/config.cpp
-        src/logger.h
+        src/logger.h src/logger.cpp
         src/loading_indicator.h src/loading_indicator.cpp src/designer/loading_indicator.ui
     )
     # Define target properties for Android with Qt 6 as:

@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-05 19:42:07
+ * @LastEditTime: 2025-08-07 01:49:07
  * @Description: Entry point.
  */
 #include <qapplication.h>
@@ -12,10 +12,7 @@
 #include <QTextStream>
 
 #include "config.h"
-#include "logger.h"
 #include "main_window.h"
-
-QTextStream GeneralLogger::g_logStream(stderr);
 
 static QString getConfigDir() {
     auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);

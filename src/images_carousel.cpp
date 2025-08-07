@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 00:50:11
+ * @LastEditTime: 2025-08-07 02:01:23
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -172,6 +172,7 @@ void ImageLoader::run() {
 ImageData::ImageData(const QString& p, const int initWidth, const int initHeight) : file(p) {
     if (!image.load(p)) {
         warn(QString("Failed to load image from path: %1").arg(p));
+        return;
     }
     // resize in "cover" mode
     const QSize targetSize(initWidth, initHeight);
@@ -290,7 +291,12 @@ ImageItem::ImageItem(const ImageData* data,
       m_itemSize(itemWidth, itemHeight),
       m_itemFocusSize(itemFocusWidth, itemFocusHeight) {
     setScaledContents(true);
-    setPixmap(QPixmap::fromImage(data->image));
+    if (data->image.isNull()) {
+        setText(":(");
+        setAlignment(Qt::AlignCenter);
+    } else {
+        setPixmap(QPixmap::fromImage(data->image));
+    }
     setFixedSize(itemWidth, itemHeight);
 }
 
