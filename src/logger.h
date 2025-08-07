@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 10:43:31
- * @LastEditTime: 2025-08-07 01:55:42
+ * @LastEditTime: 2025-08-07 21:26:09
  * @Description: A simple thread-safe logger for general use.
  */
 #ifndef GENERAL_LOGGER_H
@@ -29,16 +29,21 @@ void error(const QString& msg,
            const LogIndent indent = GENERAL);
 }  // namespace GeneralLogger
 
+#ifndef GENERAL_LOGGER_DISABLED
 class Logger : public QObject {
     Q_OBJECT
 
   public:
-    static Logger* instance(FILE* stream = nullptr);
+    static Logger* instance(FILE* stream                    = nullptr,
+                            GeneralLogger::LogIndent indent = GeneralLogger::DETAIL,
+                            QObject* parent                 = nullptr);
 
     static bool isColored();
 
   private:
-    explicit Logger(FILE* stream, QObject* parent = nullptr);
+    explicit Logger(FILE* stream,
+                    GeneralLogger::LogIndent indent,
+                    QObject* parent);
 
   private slots:
     void _log(const QString& msg,
@@ -50,6 +55,7 @@ class Logger : public QObject {
   private:
     FILE* m_stream;
     QTextStream m_logStream;
+    GeneralLogger::LogIndent m_indent;
 
   signals:
     void logSig(const QString& msg,
@@ -59,4 +65,5 @@ class Logger : public QObject {
                 const GeneralLogger::LogIndent indent);
 };
 
+#endif  // GENERAL_LOGGER_DISABLED
 #endif  // GENERAL_LOGGER_H

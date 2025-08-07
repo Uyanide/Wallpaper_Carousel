@@ -1,8 +1,8 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-07 00:32:25
- * @LastEditTime: 2025-08-07 01:00:29
- * @Description: LoadingIndicator implementation.
+ * @LastEditTime: 2025-08-07 21:13:59
+ * @Description: A loading indicator widget with a progress bar.
  */
 #ifndef LOADING_INDICATOR_H
 #define LOADING_INDICATOR_H

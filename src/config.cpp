@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-07 00:09:51
+ * @LastEditTime: 2025-08-07 21:27:26
  * @Description: Configuration manager.
  */
 #include "config.h"
@@ -66,37 +66,37 @@ void Config::_loadConfig(const QString &configPath) {
             {"actions.confirm", "confirm", [this](const QJsonValue &val) {
                  if (val.isString()) {
                      m_configItems.actionsConfirm = ::expandPath(val.toString());
-                     info(QString("Action confirm: %1").arg(m_configItems.actionsConfirm));
+                     info(QString("Action confirm: %1").arg(m_configItems.actionsConfirm), GeneralLogger::STEP);
                  }
              }},
             {"style.aspect_ratio", "aspect_ratio", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
                      m_configItems.styleAspectRatio = val.toDouble();
-                     info(QString("Aspect ratio: %1").arg(m_configItems.styleAspectRatio));
+                     info(QString("Aspect ratio: %1").arg(m_configItems.styleAspectRatio), GeneralLogger::STEP);
                  }
              }},
             {"style.image_width", "image_width", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
                      m_configItems.styleImageWidth = val.toInt();
-                     info(QString("Image width: %1").arg(m_configItems.styleImageWidth));
+                     info(QString("Image width: %1").arg(m_configItems.styleImageWidth), GeneralLogger::STEP);
                  }
              }},
             {"style.image_focus_width", "image_focus_width", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
                      m_configItems.styleImageFocusWidth = val.toInt();
-                     info(QString("Image focus width: %1").arg(m_configItems.styleImageFocusWidth));
+                     info(QString("Image focus width: %1").arg(m_configItems.styleImageFocusWidth), GeneralLogger::STEP);
                  }
              }},
             {"style.window_width", "window_width", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
                      m_configItems.styleWindowWidth = val.toInt();
-                     info(QString("Window width: %1").arg(m_configItems.styleWindowWidth));
+                     info(QString("Window width: %1").arg(m_configItems.styleWindowWidth), GeneralLogger::STEP);
                  }
              }},
             {"style.window_height", "window_height", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
                      m_configItems.styleWindowHeight = val.toInt();
-                     info(QString("Window height: %1").arg(m_configItems.styleWindowHeight));
+                     info(QString("Window height: %1").arg(m_configItems.styleWindowHeight), GeneralLogger::STEP);
                  }
              }},
             {"sort.type", "type", [this](const QJsonValue &val) {
@@ -111,15 +111,15 @@ void Config::_loadConfig(const QString &configPath) {
                      } else if (type == "size") {
                          m_configItems.sortType = SortType::Size;
                      } else {
-                         warn(QString("Unknown sort type: %1").arg(type));
+                         warn(QString("Unknown sort type: %1").arg(type), GeneralLogger::STEP);
                      }
                  }
-                 info(QString("Sort type: %1").arg(static_cast<int>(m_configItems.sortType)));
+                 info(QString("Sort type: %1").arg(static_cast<int>(m_configItems.sortType)), GeneralLogger::STEP);
              }},
             {"sort.reverse", "reverse", [this](const QJsonValue &val) {
                  if (val.isBool()) {
                      m_configItems.sortReverse = val.toBool();
-                     info(QString("Sort reverse: %1").arg(m_configItems.sortReverse));
+                     info(QString("Sort reverse: %1").arg(m_configItems.sortReverse), GeneralLogger::STEP);
                  }
              }},
         };

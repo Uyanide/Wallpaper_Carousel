@@ -53,6 +53,12 @@ target_link_libraries(wallpaper_chooser PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
 target_include_directories(wallpaper_chooser PRIVATE src)
 
+if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    target_compile_definitions(wallpaper_chooser PRIVATE
+        GENERAL_LOGGER_DISABLED
+    )
+endif()
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.

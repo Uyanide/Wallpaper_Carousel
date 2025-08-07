@@ -4,7 +4,8 @@
             "~/Pictures/116327446_p0.jpg"
         ],
         "dirs": [
-            "~/.config/backgrounds"
+            "~/.config/backgrounds",
+            "/run/media/kolkas/移硬1T/逆流茶会/"
         ],
         "excludes": [
             "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",
