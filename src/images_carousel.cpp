@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 22:17:41
+ * @LastEditTime: 2025-08-08 00:43:47
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -37,9 +37,11 @@ ImagesCarousel::ImagesCarousel(const Config::StyleConfigItems& styleConfig,
       m_sortType(sortConfig.type),
       m_sortReverse(sortConfig.reverse) {
     ui->setupUi(this);
-    m_scrollArea = dynamic_cast<ImagesCarouselScrollArea*>(ui->scrollArea);
-
+    m_scrollArea   = dynamic_cast<ImagesCarouselScrollArea*>(ui->scrollArea);
     m_imagesLayout = dynamic_cast<QHBoxLayout*>(ui->scrollAreaWidgetContents->layout());
+
+    // Remove border
+    ui->scrollArea->setFrameShape(QFrame::NoFrame);
 
     // Load initial images
     connect(this,

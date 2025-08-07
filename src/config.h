@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-07 22:28:11
+ * @LastEditTime: 2025-08-07 23:24:02
  * @Description: Configuration manager.
  */
 #ifndef CONFIG_H
@@ -16,10 +16,10 @@ class Config : public QObject {
 
   public:
     enum class SortType : int {
-        None = 0,
-        Name,
-        Date,
-        Size,
+        None = 0,  // "none"
+        Name,      // "name"
+        Date,      // "date"
+        Size,      // "size"
     };
 
     struct WallpaperConfigItems {
