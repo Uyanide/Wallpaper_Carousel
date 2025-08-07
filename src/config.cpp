@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-07 22:02:55
+ * @LastEditTime: 2025-08-07 22:27:50
  * @Description: Configuration manager.
  */
 #include "config.h"
@@ -18,6 +18,23 @@
 using namespace GeneralLogger;
 
 static QString expandPath(const QString &path);
+
+const QString Config::s_DefaultConfigFileName = "config.json";
+
+Config::Config(const QString &configDir, const QStringList &searchDirs, QObject *parent)
+    : QObject(parent), m_configDir(configDir) {
+    info(QString("Loading configuration from: %1").arg(configDir));
+    _loadConfig(configDir + QDir::separator() + s_DefaultConfigFileName);
+
+    info(QString("Additional search directories: %1").arg(searchDirs.join(", ")));
+    m_wallpaperConfig.dirs.append(searchDirs);
+
+    info("Loading wallpapers ...");
+    _loadWallpapers();
+}
+
+Config::~Config() {
+}
 
 void Config::_loadConfig(const QString &configPath) {
     QFile configFile(configPath);
@@ -55,77 +72,77 @@ void Config::_loadConfig(const QString &configPath) {
     std::vector<ConfigMapping>
         mappings = {
             {"wallpaper.paths", "paths", [this](const QJsonValue &val) {
-                 parseJsonArray(val, m_configItems.wallpaperPaths);
+                 parseJsonArray(val, m_wallpaperConfig.paths);
              }},
             {"wallpaper.dirs", "dirs", [this](const QJsonValue &val) {
-                 parseJsonArray(val, m_configItems.wallpaperDirs);
+                 parseJsonArray(val, m_wallpaperConfig.dirs);
              }},
             {"wallpaper.excludes", "excludes", [this](const QJsonValue &val) {
-                 parseJsonArray(val, m_configItems.wallpaperExcludes);
+                 parseJsonArray(val, m_wallpaperConfig.excludes);
              }},
-            {"actions.confirm", "confirm", [this](const QJsonValue &val) {
+            {"action.confirm", "confirm", [this](const QJsonValue &val) {
                  if (val.isString()) {
-                     m_configItems.actionsConfirm = ::expandPath(val.toString());
-                     info(QString("Action confirm: %1").arg(m_configItems.actionsConfirm), GeneralLogger::STEP);
+                     m_actionConfig.confirm = ::expandPath(val.toString());
+                     info(QString("Action confirm: %1").arg(m_actionConfig.confirm), GeneralLogger::STEP);
                  }
              }},
             {"style.aspect_ratio", "aspect_ratio", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
-                     m_configItems.styleAspectRatio = val.toDouble();
-                     info(QString("Aspect ratio: %1").arg(m_configItems.styleAspectRatio), GeneralLogger::STEP);
+                     m_styleConfig.aspectRatio = val.toDouble();
+                     info(QString("Aspect ratio: %1").arg(m_styleConfig.aspectRatio), GeneralLogger::STEP);
                  }
              }},
             {"style.image_width", "image_width", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
-                     m_configItems.styleImageWidth = val.toInt();
-                     info(QString("Image width: %1").arg(m_configItems.styleImageWidth), GeneralLogger::STEP);
+                     m_styleConfig.imageWidth = val.toInt();
+                     info(QString("Image width: %1").arg(m_styleConfig.imageWidth), GeneralLogger::STEP);
                  }
              }},
             {"style.image_focus_width", "image_focus_width", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
-                     m_configItems.styleImageFocusWidth = val.toInt();
-                     info(QString("Image focus width: %1").arg(m_configItems.styleImageFocusWidth), GeneralLogger::STEP);
+                     m_styleConfig.imageFocusWidth = val.toInt();
+                     info(QString("Image focus width: %1").arg(m_styleConfig.imageFocusWidth), GeneralLogger::STEP);
                  }
              }},
             {"style.window_width", "window_width", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
-                     m_configItems.styleWindowWidth = val.toInt();
-                     info(QString("Window width: %1").arg(m_configItems.styleWindowWidth), GeneralLogger::STEP);
+                     m_styleConfig.windowWidth = val.toInt();
+                     info(QString("Window width: %1").arg(m_styleConfig.windowWidth), GeneralLogger::STEP);
                  }
              }},
             {"style.window_height", "window_height", [this](const QJsonValue &val) {
                  if (val.isDouble() && val.toDouble() > 0) {
-                     m_configItems.styleWindowHeight = val.toInt();
-                     info(QString("Window height: %1").arg(m_configItems.styleWindowHeight), GeneralLogger::STEP);
+                     m_styleConfig.windowHeight = val.toInt();
+                     info(QString("Window height: %1").arg(m_styleConfig.windowHeight), GeneralLogger::STEP);
                  }
              }},
             {"style.no_loading_screen", "no_loading_screen", [this](const QJsonValue &val) {
                  if (val.isBool()) {
-                     m_configItems.styleNoLoadingScreen = val.toBool();
-                     info(QString("No loading screen: %1").arg(m_configItems.styleNoLoadingScreen), GeneralLogger::STEP);
+                     m_styleConfig.noLoadingScreen = val.toBool();
+                     info(QString("No loading screen: %1").arg(m_styleConfig.noLoadingScreen), GeneralLogger::STEP);
                  }
              }},
             {"sort.type", "type", [this](const QJsonValue &val) {
                  if (val.isString()) {
                      QString type = val.toString().toLower();
                      if (type == "none") {
-                         m_configItems.sortType = SortType::None;
+                         m_sortConfig.type = SortType::None;
                      } else if (type == "name") {
-                         m_configItems.sortType = SortType::Name;
+                         m_sortConfig.type = SortType::Name;
                      } else if (type == "date") {
-                         m_configItems.sortType = SortType::Date;
+                         m_sortConfig.type = SortType::Date;
                      } else if (type == "size") {
-                         m_configItems.sortType = SortType::Size;
+                         m_sortConfig.type = SortType::Size;
                      } else {
                          warn(QString("Unknown sort type: %1").arg(type), GeneralLogger::STEP);
                      }
                  }
-                 info(QString("Sort type: %1").arg(static_cast<int>(m_configItems.sortType)), GeneralLogger::STEP);
+                 info(QString("Sort type: %1").arg(static_cast<int>(m_sortConfig.type)), GeneralLogger::STEP);
              }},
             {"sort.reverse", "reverse", [this](const QJsonValue &val) {
                  if (val.isBool()) {
-                     m_configItems.sortReverse = val.toBool();
-                     info(QString("Sort reverse: %1").arg(m_configItems.sortReverse), GeneralLogger::STEP);
+                     m_sortConfig.reverse = val.toBool();
+                     info(QString("Sort reverse: %1").arg(m_sortConfig.reverse), GeneralLogger::STEP);
                  }
              }},
         };
@@ -158,34 +175,18 @@ void Config::_loadConfig(const QString &configPath) {
     }
 }
 
-const QString Config::s_DefaultConfigFileName = "config.json";
-
-Config::Config(const QString &configDir, const QStringList &searchDirs, QObject *parent) : QObject(parent) {
-    info(QString("Loading configuration from: %1").arg(configDir));
-    _loadConfig(configDir + QDir::separator() + s_DefaultConfigFileName);
-
-    info(QString("Additional search directories: %1").arg(searchDirs.join(", ")));
-    m_configItems.wallpaperDirs.append(searchDirs);
-
-    info("Loading wallpapers ...");
-    _loadWallpapers();
-}
-
-Config::~Config() {
-}
-
 void Config::_loadWallpapers() {
     m_wallpapers.clear();
 
     QSet<QString> paths;
 
-    info(QString("Loading wallpapers from %1 specified paths").arg(m_configItems.wallpaperPaths.size()), LogIndent::STEP);
-    for (const QString &path : m_configItems.wallpaperPaths) {
+    info(QString("Loading wallpapers from %1 specified paths").arg(m_wallpaperConfig.paths.size()), LogIndent::STEP);
+    for (const QString &path : m_wallpaperConfig.paths) {
         paths.insert(path);
     }
 
-    info(QString("Loading wallpapers from %1 specified directories").arg(m_configItems.wallpaperDirs.size()), LogIndent::STEP);
-    for (const QString &dirPath : m_configItems.wallpaperDirs) {
+    info(QString("Loading wallpapers from %1 specified directories").arg(m_wallpaperConfig.dirs.size()), LogIndent::STEP);
+    for (const QString &dirPath : m_wallpaperConfig.dirs) {
         QDir dir(dirPath);
         if (dir.exists()) {
             QStringList files = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
@@ -198,8 +199,8 @@ void Config::_loadWallpapers() {
         }
     }
 
-    info(QString("Excluding %1 specified paths").arg(m_configItems.wallpaperExcludes.size()), LogIndent::STEP);
-    for (const QString &exclude : m_configItems.wallpaperExcludes) {
+    info(QString("Excluding %1 specified paths").arg(m_wallpaperConfig.excludes.size()), LogIndent::STEP);
+    for (const QString &exclude : m_wallpaperConfig.excludes) {
         paths.remove(exclude);
     }
 

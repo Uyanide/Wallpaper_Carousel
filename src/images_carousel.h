@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 00:52:14
+ * @LastEditTime: 2025-08-07 22:16:37
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
@@ -111,11 +111,8 @@ class ImagesCarousel : public QWidget {
     friend void ImageLoader::run();
 
   public:
-    explicit ImagesCarousel(const double itemAspectRatio,
-                            const int itemWidth,
-                            const int itemFocusWidth,
-                            const Config::SortType sortType,
-                            const bool sortReverse,
+    explicit ImagesCarousel(const Config::StyleConfigItems& styleConfig,
+                            const Config::SortConfigItems& sortConfig,
                             QWidget* parent = nullptr);
     ~ImagesCarousel();
 

@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 22:06:44
+ * @LastEditTime: 2025-08-07 22:17:41
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -25,20 +25,17 @@
 
 using namespace GeneralLogger;
 
-ImagesCarousel::ImagesCarousel(const double itemAspectRatio,
-                               const int itemWidth,
-                               const int itemFocusWidth,
-                               const Config::SortType sortType,
-                               const bool sortReverse,
+ImagesCarousel::ImagesCarousel(const Config::StyleConfigItems& styleConfig,
+                               const Config::SortConfigItems& sortConfig,
                                QWidget* parent)
     : QWidget(parent),
       ui(new Ui::ImagesCarousel),
-      m_itemWidth(itemWidth),
-      m_itemHeight(static_cast<int>(itemWidth / itemAspectRatio)),
-      m_itemFocusWidth(itemFocusWidth),
-      m_itemFocusHeight(static_cast<int>(itemFocusWidth / itemAspectRatio)),
-      m_sortType(sortType),
-      m_sortReverse(sortReverse) {
+      m_itemWidth(styleConfig.imageWidth),
+      m_itemHeight(static_cast<int>(m_itemWidth / styleConfig.aspectRatio)),
+      m_itemFocusWidth(styleConfig.imageFocusWidth),
+      m_itemFocusHeight(static_cast<int>(styleConfig.imageFocusWidth / styleConfig.aspectRatio)),
+      m_sortType(sortConfig.type),
+      m_sortReverse(sortConfig.reverse) {
     ui->setupUi(this);
     m_scrollArea = dynamic_cast<ImagesCarouselScrollArea*>(ui->scrollArea);
 

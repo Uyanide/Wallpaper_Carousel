@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:34:52
- * @LastEditTime: 2025-08-07 22:03:05
+ * @LastEditTime: 2025-08-07 22:28:11
  * @Description: Configuration manager.
  */
 #ifndef CONFIG_H
@@ -22,6 +22,30 @@ class Config : public QObject {
         Size,
     };
 
+    struct WallpaperConfigItems {
+        QStringList paths;
+        QStringList dirs;
+        QStringList excludes;
+    };
+
+    struct ActionConfigItems {
+        QString confirm;
+    };
+
+    struct StyleConfigItems {
+        double aspectRatio   = 1.6;
+        int imageWidth       = 320;
+        int imageFocusWidth  = 480;
+        int windowWidth      = 750;
+        int windowHeight     = 500;
+        bool noLoadingScreen = false;
+    };
+
+    struct SortConfigItems {
+        SortType type = SortType::Name;
+        bool reverse  = false;
+    };
+
     Config(const QString& configDir, const QStringList& searchDirs = {}, QObject* parent = nullptr);
 
     ~Config();
@@ -32,46 +56,26 @@ class Config : public QObject {
 
     [[nodiscard]] qint64 getWallpaperCount() const { return m_wallpapers.size(); }
 
-    [[nodiscard]] const QString& getActionsConfirm() const { return m_configItems.actionsConfirm; }
+    [[nodiscard]] const WallpaperConfigItems& getWallpaperConfig() const { return m_wallpaperConfig; }
 
-    [[nodiscard]] double getStyleAspectRatio() const { return m_configItems.styleAspectRatio; }
+    [[nodiscard]] const ActionConfigItems& getActionConfig() const { return m_actionConfig; }
 
-    [[nodiscard]] int getStyleImageWidth() const { return m_configItems.styleImageWidth; }
+    [[nodiscard]] const StyleConfigItems& getStyleConfig() const { return m_styleConfig; }
 
-    [[nodiscard]] int getStyleImageFocusWidth() const { return m_configItems.styleImageFocusWidth; }
-
-    [[nodiscard]] int getStyleWindowWidth() const { return m_configItems.styleWindowWidth; }
-
-    [[nodiscard]] int getStyleWindowHeight() const { return m_configItems.styleWindowHeight; }
-
-    [[nodiscard]] bool isStyleNoLoadingScreen() const { return m_configItems.styleNoLoadingScreen; }
-
-    [[nodiscard]] SortType getSortType() const { return m_configItems.sortType; }
-
-    [[nodiscard]] bool isSortReverse() const { return m_configItems.sortReverse; }
+    [[nodiscard]] const SortConfigItems& getSortConfig() const { return m_sortConfig; }
 
     static const QString s_DefaultConfigFileName;
+    const QString m_configDir;
 
   private:
-    void
-    _loadConfig(const QString& configPath);
+    void _loadConfig(const QString& configPath);
     void _loadWallpapers();
 
   private:
-    struct _ConfigItems {
-        QStringList wallpaperPaths;
-        QStringList wallpaperDirs;
-        QStringList wallpaperExcludes;
-        QString actionsConfirm;
-        double styleAspectRatio   = 1.6;
-        int styleImageWidth       = 320;
-        int styleImageFocusWidth  = 480;
-        int styleWindowWidth      = 720;
-        int styleWindowHeight     = 500;
-        bool styleNoLoadingScreen = false;
-        SortType sortType         = SortType::None;
-        bool sortReverse          = false;
-    } m_configItems;
+    WallpaperConfigItems m_wallpaperConfig;
+    ActionConfigItems m_actionConfig;
+    StyleConfigItems m_styleConfig;
+    SortConfigItems m_sortConfig;
 
     QStringList m_wallpapers;
 };

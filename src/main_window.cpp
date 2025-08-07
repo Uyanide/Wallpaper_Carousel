@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-07 22:03:58
+ * @LastEditTime: 2025-08-07 22:15:47
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -36,11 +36,8 @@ void MainWindow::_setupUI() {
 
     // create images carousel
     m_carousel = new ImagesCarousel(
-        m_config.getStyleAspectRatio(),
-        m_config.getStyleImageWidth(),
-        m_config.getStyleImageFocusWidth(),
-        m_config.getSortType(),
-        m_config.isSortReverse(),
+        m_config.getStyleConfig(),
+        m_config.getSortConfig(),
         this);
     ui->mainLayout->insertWidget(2, m_carousel);
     connect(m_carousel,
@@ -66,8 +63,8 @@ void MainWindow::_setupUI() {
     m_loadingIndicatorIndex = ui->stackedWidget->addWidget(m_loadingIndicator);
 
     // set window size
-    setMinimumSize(m_config.getStyleWindowWidth(), m_config.getStyleWindowHeight());
-    setMaximumSize(m_config.getStyleWindowWidth(), m_config.getStyleWindowHeight());
+    setMinimumSize(m_config.getStyleConfig().windowWidth, m_config.getStyleConfig().windowHeight);
+    setMaximumSize(m_config.getStyleConfig().windowWidth, m_config.getStyleConfig().windowHeight);
 
     connect(ui->confirmButton,
             &QPushButton::clicked,
@@ -115,7 +112,7 @@ void MainWindow::onConfirm() {
         return;
     }
     info(QString("Selected image: %1").arg(path));
-    const auto cmdOrig = m_config.getActionsConfirm();
+    const auto cmdOrig = m_config.getActionConfig().confirm;
     if (cmdOrig.isEmpty()) {
         warn("No action defined for confirmation");
         return;
@@ -140,7 +137,7 @@ void MainWindow::_onImageFocused(const QString &path, const int index, const int
 }
 
 void MainWindow::_onLoadingStarted(const qsizetype amount) {
-    if (m_config.isStyleNoLoadingScreen()) {
+    if (m_config.getStyleConfig().noLoadingScreen) {
         return;
     }
     m_loadingIndicator->setMaximum(amount);

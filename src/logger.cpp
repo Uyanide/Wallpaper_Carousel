@@ -1,10 +1,12 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-07 01:12:37
- * @LastEditTime: 2025-08-07 21:21:45
+ * @LastEditTime: 2025-08-07 22:24:27
  * @Description: Implementation of logger.
  */
 #include "logger.h"
+
+#include <qnamespace.h>
 
 #ifndef GENERAL_LOGGER_DISABLED
 
@@ -40,7 +42,7 @@ Logger::Logger(FILE* stream,
             &Logger::logSig,
             this,
             &Logger::_log,
-            Qt::QueuedConnection);
+            Qt::AutoConnection);
 }
 
 void Logger::_log(
