@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-08 02:41:05
+ * @LastEditTime: 2025-08-08 04:17:53
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
@@ -173,10 +173,10 @@ class ImagesCarousel : public QWidget {
     ImagesCarouselScrollArea* m_scrollArea = nullptr;
 
     // Items and counters
-    QList<ImageItem*> m_loadedImages;  // m_loadedImages.size() may != m_loadedImagesCount
-    int m_loadedImagesCount = 0;       // increase when _insertImage is called OR ImageLoader::run() is called with m_stopSign as true
-    int m_addedImagesCount  = 0;       // increase when appendImages called
-    QMutex m_countMutex;               // for m_loadedImagesCount and m_addedImagesCount
+    QVector<ImageItem*> m_loadedImages;  // m_loadedImages.size() may != m_loadedImagesCount
+    int m_loadedImagesCount = 0;         // increase when _insertImage is called OR ImageLoader::run() is called with m_stopSign as true
+    int m_addedImagesCount  = 0;         // increase when appendImages called
+    QMutex m_countMutex;                 // for m_loadedImagesCount and m_addedImagesCount
     int m_currentIndex = 0;
 
     // Animations
