@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-07 22:15:47
+ * @LastEditTime: 2025-08-08 02:25:20
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -33,7 +33,6 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::_setupUI() {
-
     // create images carousel
     m_carousel = new ImagesCarousel(
         m_config.getStyleConfig(),
@@ -44,6 +43,14 @@ void MainWindow::_setupUI() {
             &ImagesCarousel::imageFocused,
             this,
             &MainWindow::_onImageFocused);
+    connect(this, &MainWindow::stop, m_carousel, &ImagesCarousel::onStop);
+    connect(m_carousel, &ImagesCarousel::stopped, this,
+            // &MainWindow::close); // instead of closing, we just stop the loading
+            [this]() {
+                _onLoadingCompleted(m_carousel->getLoadedImagesCount());
+                m_carousel->focusCurrImage(); },
+            // ensure this is called in the main thread
+            Qt::QueuedConnection);
     m_carouselIndex = ui->stackedWidget->addWidget(m_carousel);
 
     // create loading indicator
@@ -85,6 +92,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
         onCancel();
     } else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
         onConfirm();
+    }
+    // if loadingScreen is enabled and loading is in progress, ignore other keys
+    else if (!m_config.getStyleConfig().noLoadingScreen && m_isLoading) {
+        event->ignore();
     } else if (event->key() == Qt::Key_Space || event->key() == Qt::Key_Tab || event->key() == Qt::Key_Right) {
         m_carousel->focusNextImage();
     } else if (event->key() == Qt::Key_Left) {
@@ -105,6 +116,10 @@ void MainWindow::wheelEvent(QWheelEvent *event) {
 }
 
 void MainWindow::onConfirm() {
+    if (m_isLoading) {
+        warn("Loading is still in progress, please wait until it finishes.");
+        return;
+    }
     close();
     const auto path = m_carousel->getCurrentImagePath();
     if (path.isEmpty()) {
@@ -129,7 +144,12 @@ void MainWindow::onConfirm() {
 }
 
 void MainWindow::onCancel() {
-    close();
+    if (m_isLoading) {
+        warn("Loading stopped by user, waiting all threads to finish...");
+        emit stop();
+    } else {
+        close();
+    }
 }
 
 void MainWindow::_onImageFocused(const QString &path, const int index, const int count) {
@@ -137,6 +157,7 @@ void MainWindow::_onImageFocused(const QString &path, const int index, const int
 }
 
 void MainWindow::_onLoadingStarted(const qsizetype amount) {
+    m_isLoading = true;
     if (m_config.getStyleConfig().noLoadingScreen) {
         return;
     }
@@ -145,5 +166,7 @@ void MainWindow::_onLoadingStarted(const qsizetype amount) {
 }
 
 void MainWindow::_onLoadingCompleted(const qsizetype amount) {
+    info(QString("Loading completed, loaded %1 images").arg(amount));
     ui->stackedWidget->setCurrentIndex(m_carouselIndex);
+    m_isLoading = false;
 }

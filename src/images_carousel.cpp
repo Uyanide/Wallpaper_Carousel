@@ -1,17 +1,13 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-08 00:43:47
+ * @LastEditTime: 2025-08-08 02:34:24
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
 
+#include <assert.h>
 #include <pthread.h>
-#include <qboxlayout.h>
-#include <qdebug.h>
-#include <qnamespace.h>
-#include <qobject.h>
-#include <qpixmap.h>
 
 #include <QLabel>
 #include <QMetaObject>
@@ -76,7 +72,7 @@ void ImagesCarousel::_onInitImagesLoaded() {
     if (m_loadedImages.isEmpty()) {
         return;
     }
-    _focusCurrImage();
+    focusCurrImage();
 }
 
 ImagesCarousel::~ImagesCarousel() {
@@ -91,8 +87,8 @@ ImagesCarousel::~ImagesCarousel() {
 
 void ImagesCarousel::appendImages(const QStringList& paths) {
     {
-        QMutexLocker locker(&m_imageCountMutex);
-        m_imageCount += paths.size();
+        QMutexLocker locker(&m_countMutex);
+        m_addedImagesCount += paths.size();
     }
     emit loadingStarted(paths.size());
     for (const QString& path : paths) {
@@ -152,14 +148,31 @@ void ImagesCarousel::_insertImage(const ImageData* data) {
 
     emit imageLoaded(m_loadedImages.size());
     {
-        QMutexLocker countLocker(&m_imageCountMutex);
-        if (m_loadedImages.size() >= m_imageCount) {
-            emit loadingCompleted(m_loadedImages.size());
+        QMutexLocker countLocker(&m_countMutex);
+        if (++m_loadedImagesCount >= m_addedImagesCount) {
+            QMutexLocker stopSignLocker(&m_stopSignMutex);
+            if (m_stopSign) {
+                // if all stopped
+                emit stopped();
+            } else {
+                emit loadingCompleted(m_loadedImagesCount);
+            }
         }
     }
 }
 
 void ImageLoader::run() {
+    {
+        QMutexLocker countLocker(&m_carousel->m_countMutex);
+        QMutexLocker stopSignLocker(&m_carousel->m_stopSignMutex);
+        if (m_carousel->m_stopSign) {
+            // if all stopped
+            if (++m_carousel->m_loadedImagesCount == m_carousel->m_addedImagesCount) {
+                emit m_carousel->stopped();
+            }
+            return;
+        }
+    }
     auto data = new ImageData(m_path, m_initWidth, m_initHeight);
     QMetaObject::invokeMethod(m_carousel,
                               "_insertImage",
@@ -183,32 +196,38 @@ ImageData::ImageData(const QString& p, const int initWidth, const int initHeight
 }
 
 void ImagesCarousel::focusNextImage() {
-    _unfocusCurrImage();
+    unfocusCurrImage();
     if (m_loadedImages.size() <= 1) return;
     m_currentIndex++;
     if (m_currentIndex >= m_loadedImages.size()) {
         m_currentIndex = 0;
     }
-    _focusCurrImage();
+    focusCurrImage();
 }
 
 void ImagesCarousel::focusPrevImage() {
     if (m_loadedImages.size() <= 1) return;
-    _unfocusCurrImage();
+    unfocusCurrImage();
     m_currentIndex--;
     if (m_currentIndex < 0) {
         m_currentIndex = m_loadedImages.size() - 1;
     }
-    _focusCurrImage();
+    focusCurrImage();
 }
 
-void ImagesCarousel::_unfocusCurrImage() {
-    // bound check was (or should) done by caller
+void ImagesCarousel::unfocusCurrImage() {
+    if (m_currentIndex < 0 || m_currentIndex >= m_loadedImages.size()) {
+        error(QString("Invalid index to unfocus: %1").arg(m_currentIndex));
+        return;
+    }
     m_loadedImages[m_currentIndex]->setFocus(false);
 }
 
-void ImagesCarousel::_focusCurrImage() {
-    // bound check was (or should) done by caller
+void ImagesCarousel::focusCurrImage() {
+    if (m_currentIndex < 0 || m_currentIndex >= m_loadedImages.size()) {
+        error(QString("Invalid index to focus: %1").arg(m_currentIndex));
+        return;
+    }
     m_loadedImages[m_currentIndex]->setFocus(true);
     emit imageFocused(m_loadedImages[m_currentIndex]->getFileFullPath(),
                       m_currentIndex,
@@ -263,19 +282,19 @@ void ImagesCarousel::_onScrollBarValueChanged(int value) {
     if (index == m_currentIndex) {
         return;  // Already focused
     }
-    _unfocusCurrImage();
+    unfocusCurrImage();
     m_currentIndex = index;
-    _focusCurrImage();
+    focusCurrImage();
 }
 
 void ImagesCarousel::_onItemClicked(int index) {
     // if (m_suppressAutoFocus) return;
-    _unfocusCurrImage();
+    unfocusCurrImage();
     m_currentIndex = index;
     if (index < 0 || index >= m_loadedImages.size()) {
         return;  // Out of bounds
     }
-    _focusCurrImage();
+    focusCurrImage();
 }
 
 ImageItem::ImageItem(const ImageData* data,
@@ -288,6 +307,7 @@ ImageItem::ImageItem(const ImageData* data,
       m_data(data),
       m_itemSize(itemWidth, itemHeight),
       m_itemFocusSize(itemFocusWidth, itemFocusHeight) {
+    assert(data != nullptr);
     setScaledContents(true);
     if (data->image.isNull()) {
         setText(":(");
@@ -325,4 +345,9 @@ void ImageItem::setFocus(bool focus) {
                 setFixedSize(value.toSize());
             });
     m_scaleAnimation->start();
+}
+
+void ImagesCarousel::onStop() {
+    QMutexLocker locker(&m_stopSignMutex);
+    m_stopSign = true;
 }

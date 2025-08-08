@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-07 01:08:12
+ * @LastEditTime: 2025-08-08 02:11:57
  * @Description: MainWindow implementation.
  */
 #ifndef MAINWINDOW_H
@@ -50,5 +50,9 @@ class MainWindow : public QMainWindow {
     LoadingIndicator *m_loadingIndicator = nullptr;
     int m_carouselIndex, m_loadingIndicatorIndex;
     const Config &m_config;
+    bool m_isLoading = false;
+
+  signals:
+    void stop();
 };
 #endif  // MAINWINDOW_H

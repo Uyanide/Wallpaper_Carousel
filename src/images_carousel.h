@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-07 22:16:37
+ * @LastEditTime: 2025-08-08 02:41:05
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #ifndef IMAGES_CAROUSEL_H
@@ -44,7 +44,8 @@ struct ImageData {
 };
 
 /**
- * @brief Image label that displays an image
+ * @brief Image label that displays an image,
+ *        which should always be created in the main thread.
  */
 class ImageItem : public QLabel {
     Q_OBJECT
@@ -89,10 +90,13 @@ class ImageItem : public QLabel {
     void clicked(int index);
 };
 
+/**
+ * @brief Worker class for loading images in a separate thread.
+ */
 class ImageLoader : public QRunnable {
   public:
     ImageLoader(const QString& path, ImagesCarousel* carousel);
-    void run() override;
+    void run() override;  // friend to ImagesCarousel
 
   private:
     QString m_path;
@@ -126,49 +130,75 @@ class ImagesCarousel : public QWidget {
         return m_loadedImages[m_currentIndex]->getFileFullPath();
     }
 
-    const int m_itemWidth             = 320;
-    const int m_itemHeight            = 180;
-    const int m_itemFocusWidth        = 480;
-    const int m_itemFocusHeight       = 270;
-    const Config::SortType m_sortType = Config::SortType::None;
-    const bool m_sortReverse          = false;
+    // Should always be called in the main thread
+    [[nodiscard]] qsizetype getLoadedImagesCount() {
+        return m_loadedImages.size();
+    }
+
+    [[nodiscard]] qsizetype getAddedImagesCount() {
+        QMutexLocker locker(&m_countMutex);
+        return m_addedImagesCount;
+    }
+
+    // config items
+    const int m_itemWidth;
+    const int m_itemHeight;
+    const int m_itemFocusWidth;
+    const int m_itemFocusHeight;
+    const Config::SortType m_sortType;
+    const bool m_sortReverse;
 
   public slots:
     void focusNextImage();
     void focusPrevImage();
+    void focusCurrImage();
+    void unfocusCurrImage();
+    void onStop();
 
   private slots:
-    void _unfocusCurrImage();
     void _onScrollBarValueChanged(int value);
     void _onItemClicked(int index);
     void _onInitImagesLoaded();
 
   public:
-    void
-    appendImages(const QStringList& paths);
+    void appendImages(const QStringList& paths);
 
   private:
-    void _focusCurrImage();
     Q_INVOKABLE void _insertImage(const ImageData* item);
 
   private:
+    // UI elements
     Ui::ImagesCarousel* ui;
-    QList<ImageItem*> m_loadedImages;
-    int m_currentIndex                    = 0;
-    QPropertyAnimation* m_scrollAnimation = nullptr;
-    QHBoxLayout* m_imagesLayout           = nullptr;
-    QMutex m_imageCountMutex;
-    int m_imageCount                       = 0;
-    bool m_suppressAutoFocus               = false;
-    int m_pendingScrollValue               = 0;
-    QTimer* m_scrollDebounceTimer          = nullptr;
+    QHBoxLayout* m_imagesLayout            = nullptr;
     ImagesCarouselScrollArea* m_scrollArea = nullptr;
+
+    // Items and counters
+    QList<ImageItem*> m_loadedImages;  // m_loadedImages.size() may != m_loadedImagesCount
+    int m_loadedImagesCount = 0;       // increase when _insertImage is called OR ImageLoader::run() is called with m_stopSign as true
+    int m_addedImagesCount  = 0;       // increase when appendImages called
+    QMutex m_countMutex;               // for m_loadedImagesCount and m_addedImagesCount
+    int m_currentIndex = 0;
+
+    // Animations
+    QPropertyAnimation* m_scrollAnimation = nullptr;
+
+    // Auto focusing
+    bool m_suppressAutoFocus      = false;
+    int m_pendingScrollValue      = 0;
+    QTimer* m_scrollDebounceTimer = nullptr;
+
+    // Loading stopped by user
+    QMutex m_stopSignMutex;
+    bool m_stopSign = false;
 
   signals:
     void imageFocused(const QString& path, const int index, const int count);
+
     void loadingStarted(const qsizetype amount);
     void loadingCompleted(const qsizetype amount);
     void imageLoaded(const qsizetype count);
+
+    void stopped();
 };
 
 class ImagesCarouselScrollArea : public QScrollArea {
