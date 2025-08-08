@@ -5,7 +5,7 @@
         ],
         "dirs": [
             "~/.config/backgrounds",
-            "/run/media/kolkas/移硬1T/逆流茶会/"
+            "~/Pictures/逆流茶会/"
         ],
         "excludes": [
             "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",
@@ -25,7 +25,7 @@
         "no_loading_screen": true
     },
     "sort": {
-        "type": "name",
+        "type": "none",
         "reverse": false
     }
 }

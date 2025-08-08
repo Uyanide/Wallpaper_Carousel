@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-08 04:05:07
+ * @LastEditTime: 2025-08-08 05:12:37
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -90,6 +90,7 @@ void ImagesCarousel::appendImages(const QStringList& paths) {
         QMutexLocker locker(&m_countMutex);
         m_addedImagesCount += paths.size();
     }
+    m_loadedImages.reserve(m_loadedImages.size() + paths.size());
     emit loadingStarted(paths.size());
     for (const QString& path : paths) {
         ImageLoader* loader = new ImageLoader(path, this);
@@ -130,7 +131,6 @@ void ImagesCarousel::_insertImage(const ImageData* data) {
     };
 
     // insert into correct position based on sort type and direction
-    // currently O(n^2), but better as O(n * (n + log(n))) with vector and binary search
     qint64 inserPos = m_loadedImages.size();
     if (m_sortType != Config::SortType::None) {
         for (auto it = m_loadedImages.rbegin();
