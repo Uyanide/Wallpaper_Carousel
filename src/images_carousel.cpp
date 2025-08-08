@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-08 02:34:24
+ * @LastEditTime: 2025-08-08 04:05:07
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"

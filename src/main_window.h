@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-08 02:11:57
+ * @LastEditTime: 2025-08-08 03:37:24
  * @Description: MainWindow implementation.
  */
 #ifndef MAINWINDOW_H
@@ -44,13 +44,22 @@ class MainWindow : public QMainWindow {
     void _onLoadingStarted(const qsizetype amount);
     void _onLoadingCompleted(const qsizetype amount);
 
+    void _onCancelPressed();
+    void _onConfirmPressed();
+
   private:
+    enum _State {
+        Init,
+        Loading,
+        Stopping,
+        Ready,
+    } m_state = Init;
+
     Ui::MainWindow *ui;
     ImagesCarousel *m_carousel           = nullptr;
     LoadingIndicator *m_loadingIndicator = nullptr;
     int m_carouselIndex, m_loadingIndicatorIndex;
     const Config &m_config;
-    bool m_isLoading = false;
 
   signals:
     void stop();

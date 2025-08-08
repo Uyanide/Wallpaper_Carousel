@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-08 02:25:20
+ * @LastEditTime: 2025-08-08 04:04:17
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -44,13 +44,6 @@ void MainWindow::_setupUI() {
             this,
             &MainWindow::_onImageFocused);
     connect(this, &MainWindow::stop, m_carousel, &ImagesCarousel::onStop);
-    connect(m_carousel, &ImagesCarousel::stopped, this,
-            // &MainWindow::close); // instead of closing, we just stop the loading
-            [this]() {
-                _onLoadingCompleted(m_carousel->getLoadedImagesCount());
-                m_carousel->focusCurrImage(); },
-            // ensure this is called in the main thread
-            Qt::QueuedConnection);
     m_carouselIndex = ui->stackedWidget->addWidget(m_carousel);
 
     // create loading indicator
@@ -76,11 +69,11 @@ void MainWindow::_setupUI() {
     connect(ui->confirmButton,
             &QPushButton::clicked,
             this,
-            &MainWindow::onConfirm);
+            &MainWindow::_onConfirmPressed);
     connect(ui->cancelButton,
             &QPushButton::clicked,
             this,
-            &MainWindow::onCancel);
+            &MainWindow::_onCancelPressed);
     ui->confirmButton->setFocusPolicy(Qt::NoFocus);
     ui->cancelButton->setFocusPolicy(Qt::NoFocus);
 
@@ -89,23 +82,123 @@ void MainWindow::_setupUI() {
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape) {
-        onCancel();
-    } else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-        onConfirm();
+        _onCancelPressed();
+        return;
     }
-    // if loadingScreen is enabled and loading is in progress, ignore other keys
-    else if (!m_config.getStyleConfig().noLoadingScreen && m_isLoading) {
-        event->ignore();
-    } else if (event->key() == Qt::Key_Space || event->key() == Qt::Key_Tab || event->key() == Qt::Key_Right) {
-        m_carousel->focusNextImage();
-    } else if (event->key() == Qt::Key_Left) {
-        m_carousel->focusPrevImage();
-    } else {
-        QMainWindow::keyPressEvent(event);
+    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+        _onConfirmPressed();
+        return;
+    }
+
+    switch (m_state) {
+        case Init:
+            MainWindow::keyPressEvent(event);
+            break;
+        case Loading:
+            if (m_config.getStyleConfig().noLoadingScreen) {
+                switch (event->key()) {
+                    case Qt::Key_Space:
+                    case Qt::Key_Tab:
+                    case Qt::Key_Right:
+                        m_carousel->focusNextImage();
+                        break;
+                    case Qt::Key_Left:
+                        m_carousel->focusPrevImage();
+                        break;
+                    default:
+                        QMainWindow::keyPressEvent(event);
+                }
+            } else {
+                event->ignore();
+            }
+            break;
+        case Ready:
+            switch (event->key()) {
+                case Qt::Key_Space:
+                case Qt::Key_Tab:
+                case Qt::Key_Right:
+                    m_carousel->focusNextImage();
+                    break;
+                case Qt::Key_Left:
+                    m_carousel->focusPrevImage();
+                    break;
+                default:
+                    QMainWindow::keyPressEvent(event);
+            }
+            break;
+        default:
+            event->ignore();
+            break;
+    }
+}
+
+void MainWindow::_onCancelPressed() {
+    switch (m_state) {
+        case Loading:
+            // case loading screen is disabled, quit the app
+            if (m_config.getStyleConfig().noLoadingScreen) {
+                info("Stopping loading and quitting app.");
+                connect(
+                    m_carousel,
+                    &ImagesCarousel::stopped,
+                    this,
+                    &MainWindow::onCancel);
+                m_state = Stopping;
+                emit stop();
+            }
+            // otherwise, stop loading and display the loaded images
+            else {
+                info("Stopping loading.");
+                connect(
+                    m_carousel,
+                    &ImagesCarousel::stopped,
+                    this,
+                    [this]() {
+                        _onLoadingCompleted(m_carousel->getLoadedImagesCount());
+                        m_carousel->focusCurrImage();
+                    });
+                m_state = Stopping;
+                emit stop();
+            }
+            break;
+        case Ready:
+            info("Quitting app.");
+            onCancel();
+            break;
+        default:
+            break;
+    }
+}
+
+void MainWindow::_onConfirmPressed() {
+    switch (m_state) {
+        case Loading:
+            // case loading screen is disabled, confirm the selection
+            if (m_config.getStyleConfig().noLoadingScreen) {
+                info("Stopping loading and confirming selection.");
+                connect(
+                    m_carousel,
+                    &ImagesCarousel::stopped,
+                    this,
+                    &MainWindow::onConfirm);
+                m_state = Stopping;
+                emit stop();
+            }
+            break;
+        case Ready:
+            info("Confirming selection.");
+            onConfirm();
+            break;
+        default:
+            break;
     }
 }
 
 void MainWindow::wheelEvent(QWheelEvent *event) {
+    if (m_state != Ready && m_config.getStyleConfig().noLoadingScreen) {
+        event->ignore();
+        return;
+    }
     if (event->angleDelta().y() > 0) {
         m_carousel->focusPrevImage();
     } else if (event->angleDelta().y() < 0) {
@@ -116,10 +209,6 @@ void MainWindow::wheelEvent(QWheelEvent *event) {
 }
 
 void MainWindow::onConfirm() {
-    if (m_isLoading) {
-        warn("Loading is still in progress, please wait until it finishes.");
-        return;
-    }
     close();
     const auto path = m_carousel->getCurrentImagePath();
     if (path.isEmpty()) {
@@ -144,12 +233,7 @@ void MainWindow::onConfirm() {
 }
 
 void MainWindow::onCancel() {
-    if (m_isLoading) {
-        warn("Loading stopped by user, waiting all threads to finish...");
-        emit stop();
-    } else {
-        close();
-    }
+    close();
 }
 
 void MainWindow::_onImageFocused(const QString &path, const int index, const int count) {
@@ -157,7 +241,7 @@ void MainWindow::_onImageFocused(const QString &path, const int index, const int
 }
 
 void MainWindow::_onLoadingStarted(const qsizetype amount) {
-    m_isLoading = true;
+    m_state = Loading;
     if (m_config.getStyleConfig().noLoadingScreen) {
         return;
     }
@@ -168,5 +252,5 @@ void MainWindow::_onLoadingStarted(const qsizetype amount) {
 void MainWindow::_onLoadingCompleted(const qsizetype amount) {
     info(QString("Loading completed, loaded %1 images").arg(amount));
     ui->stackedWidget->setCurrentIndex(m_carouselIndex);
-    m_isLoading = false;
+    m_state = Ready;
 }
