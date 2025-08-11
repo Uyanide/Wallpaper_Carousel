@@ -4,8 +4,7 @@
             "~/Pictures/116327446_p0.jpg"
         ],
         "dirs": [
-            "~/.config/backgrounds",
-            "~/Pictures/逆流茶会/"
+            "~/.config/backgrounds"
         ],
         "excludes": [
             "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",
@@ -22,10 +21,10 @@
         "image_focus_width": 480,
         "window_width": 750,
         "window_height": 500,
-        "no_loading_screen": true
+        "no_loading_screen": false
     },
     "sort": {
-        "type": "none",
-        "reverse": false
+        "type": "date",
+        "reverse": true
     }
 }

@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 01:22:53
- * @LastEditTime: 2025-08-08 05:12:37
+ * @LastEditTime: 2025-08-11 19:44:06
  * @Description: Animated carousel widget for displaying and selecting images.
  */
 #include "images_carousel.h"
@@ -86,6 +86,11 @@ ImagesCarousel::~ImagesCarousel() {
 }
 
 void ImagesCarousel::appendImages(const QStringList& paths) {
+    if (paths.isEmpty()) {
+        warn("No images to add to display.");
+        emit loadingCompleted(0);
+        return;
+    }
     {
         QMutexLocker locker(&m_countMutex);
         m_addedImagesCount += paths.size();
