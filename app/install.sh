@@ -8,9 +8,9 @@ cmake -S "$path/.." -B "$path/../build" \
 
 cmake --build "$path/../build" --target install || exit 1
 
-cp "$path/wallpaper_chooser.desktop" "$HOME"/.local/share/applications/wallpaper_chooser.desktop
+cp "$path/wallpaper-chooser.desktop" "$HOME"/.local/share/applications/wallpaper-chooser.desktop
 
-echo "Exec=$HOME/.local/bin/wallpaper_chooser" >> "$HOME"/.local/share/applications/wallpaper_chooser.desktop
+echo "Exec=$HOME/.local/bin/wallpaper-chooser" >> "$HOME"/.local/share/applications/wallpaper-chooser.desktop
 
 if command -v update-desktop-database &> /dev/null; then
     update-desktop-database "$HOME"/.local/share/applications/

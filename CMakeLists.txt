@@ -23,7 +23,7 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(wallpaper_chooser
+    qt_add_executable(wallpaper-chooser
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         src/images_carousel.h src/images_carousel.cpp src/designer/images_carousel.ui
@@ -31,32 +31,34 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         src/logger.h src/logger.cpp
         src/loading_indicator.h src/loading_indicator.cpp src/designer/loading_indicator.ui
     )
-    # Define target properties for Android with Qt 6 as:
-    #    set_property(TARGET wallpaper_chooser APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-    #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-    # For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+
+# Define target properties for Android with Qt 6 as:
+# set_property(TARGET wallpaper_chooser APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+# ${CMAKE_CURRENT_SOURCE_DIR}/android)
+# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
-        add_library(wallpaper_chooser SHARED
+        add_library(wallpaper-chooser SHARED
             ${PROJECT_SOURCES}
         )
-        # Define properties for Android with Qt 5 after find_package() calls as:
-        #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+
+    # Define properties for Android with Qt 5 after find_package() calls as:
+    # set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(wallpaper_chooser
+        add_executable(wallpaper-chooser
             ${PROJECT_SOURCES}
         )
     endif()
 endif()
 
-target_link_libraries(wallpaper_chooser PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(wallpaper-chooser PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
-target_include_directories(wallpaper_chooser PRIVATE src)
+target_include_directories(wallpaper-chooser PRIVATE src)
 
 # if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-#     target_compile_definitions(wallpaper_chooser PRIVATE
-#         GENERAL_LOGGER_DISABLED
-#     )
+# target_compile_definitions(wallpaper_chooser PRIVATE
+# GENERAL_LOGGER_DISABLED
+# )
 # endif()
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -65,7 +67,8 @@ target_include_directories(wallpaper_chooser PRIVATE src)
 if(${QT_VERSION} VERSION_LESS 6.1.0)
     set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.wallpaper_chooser)
 endif()
-set_target_properties(wallpaper_chooser PROPERTIES
+
+set_target_properties(wallpaper-chooser PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -74,12 +77,12 @@ set_target_properties(wallpaper_chooser PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS wallpaper_chooser
+install(TARGETS wallpaper-chooser
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(wallpaper_chooser)
+    qt_finalize_executable(wallpaper-chooser)
 endif()

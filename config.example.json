@@ -4,7 +4,9 @@
             "~/Pictures/116327446_p0.jpg"
         ],
         "dirs": [
-            "~/.config/backgrounds"
+            "~/.config/backgrounds",
+            "/media/Beta/壁纸/库",
+            "$HOME/.config/wallpaper-chooser/current"
         ],
         "excludes": [
             "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",
@@ -13,7 +15,7 @@
         ]
     },
     "action": {
-        "confirm": "~/.scripts/change-wallpaper.sh \"%1\""
+        "confirm": "change-wallpaper \"%1\""
     },
     "style": {
         "aspect_ratio": 1.6,
