@@ -6,7 +6,7 @@
         "dirs": [
             "~/.config/backgrounds",
             "/media/Beta/壁纸/库",
-            "$HOME/.config/wallpaper-chooser/current"
+            "$HOME/.local/share/wallpaper/current"
         ],
         "excludes": [
             "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",
