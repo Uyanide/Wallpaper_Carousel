@@ -4,9 +4,8 @@
             "~/Pictures/116327446_p0.jpg"
         ],
         "dirs": [
-            "~/.config/backgrounds",
-            "/media/Beta/壁纸/库",
-            "$HOME/.local/share/wallpaper/current"
+            "~/Pictures/backgrounds",
+            "/media/Beta/壁纸/库"
         ],
         "excludes": [
             "~/.config/backgrounds/nao-stars-crop-adjust-flop.jpg",

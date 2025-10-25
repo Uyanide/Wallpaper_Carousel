@@ -1,7 +1,7 @@
 /*
  * @Author: Uyanide pywang0608@foxmail.com
  * @Date: 2025-08-05 00:37:58
- * @LastEditTime: 2025-08-08 04:04:17
+ * @LastEditTime: 2025-10-25 12:04:38
  * @Description: MainWindow implementation.
  */
 #include "main_window.h"
@@ -17,12 +17,12 @@
 
 using namespace GeneralLogger;
 
-static QString splitNameFromPath(const QString &path) {
+static QString splitNameFromPath(const QString& path) {
     QFileInfo fileInfo(path);
     return fileInfo.fileName();
 }
 
-MainWindow::MainWindow(const Config &config, QWidget *parent)
+MainWindow::MainWindow(const Config& config, QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_config(config) {
     ui->setupUi(this);
     _setupUI();
@@ -33,6 +33,8 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::_setupUI() {
+    // change window title
+    setWindowTitle("Wallpaper Carousel");
     // create images carousel
     m_carousel = new ImagesCarousel(
         m_config.getStyleConfig(),
@@ -80,7 +82,7 @@ void MainWindow::_setupUI() {
     m_carousel->appendImages(m_config.getWallpapers());
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event) {
+void MainWindow::keyPressEvent(QKeyEvent* event) {
     if (event->key() == Qt::Key_Escape) {
         _onCancelPressed();
         return;
@@ -194,7 +196,7 @@ void MainWindow::_onConfirmPressed() {
     }
 }
 
-void MainWindow::wheelEvent(QWheelEvent *event) {
+void MainWindow::wheelEvent(QWheelEvent* event) {
     if (m_state != Ready && m_config.getStyleConfig().noLoadingScreen) {
         event->ignore();
         return;
@@ -236,7 +238,7 @@ void MainWindow::onCancel() {
     close();
 }
 
-void MainWindow::_onImageFocused(const QString &path, const int index, const int count) {
+void MainWindow::_onImageFocused(const QString& path, const int index, const int count) {
     ui->topLabel->setText(QString("%1 (%2/%3)").arg(splitNameFromPath(path)).arg(index + 1).arg(count));
 }
 
