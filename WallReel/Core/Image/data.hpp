@@ -1,5 +1,5 @@
-#ifndef WALLREEL_IMAGEDATA_HPP
-#define WALLREEL_IMAGEDATA_HPP
+#ifndef WALLREEL_IMAGE_DATA_HPP
+#define WALLREEL_IMAGE_DATA_HPP
 
 #include <QDir>
 #include <QFileInfo>
@@ -106,4 +106,4 @@ class Data {
 
 }  // namespace WallReel::Core::Image
 
-#endif  // WALLREEL_IMAGEDATA_HPP
+#endif  // WALLREEL_IMAGE_DATA_HPP

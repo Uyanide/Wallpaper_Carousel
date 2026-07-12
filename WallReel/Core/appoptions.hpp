@@ -1,4 +1,5 @@
-#pragma once
+#ifndef WALLREEL_CORE_APPOPTIONS_HPP
+#define WALLREEL_CORE_APPOPTIONS_HPP
 
 #include <QCommandLineParser>
 #include <QStringList>
@@ -36,3 +37,5 @@ class AppOptions {
 };
 
 }  // namespace WallReel::Core
+
+#endif  // WALLREEL_CORE_APPOPTIONS_HPP

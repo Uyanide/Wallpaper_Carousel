@@ -1,5 +1,5 @@
-#ifndef WALLREEL_IMAGEMODEL_HPP
-#define WALLREEL_IMAGEMODEL_HPP
+#ifndef WALLREEL_IMAGE_MODEL_HPP
+#define WALLREEL_IMAGE_MODEL_HPP
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -78,10 +78,10 @@ class ProxyModel : public QSortFilterProxyModel {
 
   private:
     QString m_searchText;
-    Config::SortType m_sortType;
-    bool m_sortDescending;
+    Config::SortType m_sortType = Config::SortType::Date;
+    bool m_sortDescending       = true;
 };
 
 }  // namespace WallReel::Core::Image
 
-#endif  // WALLREEL_IMAGEMODEL_HPP
+#endif  // WALLREEL_IMAGE_MODEL_HPP

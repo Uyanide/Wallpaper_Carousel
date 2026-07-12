@@ -1,5 +1,5 @@
-#ifndef TEXTTEMPLATE_HPP
-#define TEXTTEMPLATE_HPP
+#ifndef WALLREEL_UTILS_TEXTTEMPLATE_HPP
+#define WALLREEL_UTILS_TEXTTEMPLATE_HPP
 
 #include <QMap>
 #include <QRegularExpression>
@@ -139,4 +139,4 @@ inline QStringList extractTemplateKeys(const QString& templateStr) {
 
 }  // namespace WallReel::Core::Utils
 
-#endif  // TEXTTEMPLATE_HPP
+#endif  // WALLREEL_UTILS_TEXTTEMPLATE_HPP

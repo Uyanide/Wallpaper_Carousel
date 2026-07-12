@@ -1,5 +1,5 @@
-#ifndef WALLREEL_WALLPAPERSERVICE_HPP
-#define WALLREEL_WALLPAPERSERVICE_HPP
+#ifndef WALLREEL_SERVICE_WALLPAPER_HPP
+#define WALLREEL_SERVICE_WALLPAPER_HPP
 
 #include <QProcess>
 #include <QTimer>
@@ -38,4 +38,4 @@ class WallpaperService : public QObject {
 
 }  // namespace WallReel::Core::Service
 
-#endif  // WALLREEL_WALLPAPERSERVICE_HPP
+#endif  // WALLREEL_SERVICE_WALLPAPER_HPP

@@ -1,5 +1,5 @@
-#ifndef WALLREEL_CORE_PALETTE_DOMCOLOR_HPP
-#define WALLREEL_CORE_PALETTE_DOMCOLOR_HPP
+#ifndef WALLREEL_PALETTE_DOMCOLOR_HPP
+#define WALLREEL_PALETTE_DOMCOLOR_HPP
 
 #include <QImage>
 
@@ -15,4 +15,4 @@ QColor getDominantColor(const QImage& image);
 
 }  // namespace WallReel::Core::Palette
 
-#endif  // WALLREEL_CORE_PALETTE_DOMCOLOR_HPP
+#endif  // WALLREEL_PALETTE_DOMCOLOR_HPP

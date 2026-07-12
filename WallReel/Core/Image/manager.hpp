@@ -1,5 +1,5 @@
-#ifndef WALLREEL_IMAGEMANAGER_HPP
-#define WALLREEL_IMAGEMANAGER_HPP
+#ifndef WALLREEL_IMAGE_MANAGER_HPP
+#define WALLREEL_IMAGE_MANAGER_HPP
 
 #include <QAbstractListModel>
 #include <QDir>
@@ -96,4 +96,4 @@ class Manager : public QObject {
 
 }  // namespace WallReel::Core::Image
 
-#endif  // WALLREEL_IMAGEMANAGER_HPP
+#endif  // WALLREEL_IMAGE_MANAGER_HPP

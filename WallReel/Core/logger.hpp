@@ -1,8 +1,6 @@
 #ifndef WALLREEL_LOGGER_HPP
 #define WALLREEL_LOGGER_HPP
 
-#include <qcontainerfwd.h>
-
 #include <QLoggingCategory>
 #include <QString>
 #include <cstdio>

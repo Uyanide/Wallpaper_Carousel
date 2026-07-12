@@ -1,8 +1,6 @@
 #ifndef WALLREEL_PALETTE_MANAGER_HPP
 #define WALLREEL_PALETTE_MANAGER_HPP
 
-#include <qcolor.h>
-
 #include "Config/data.hpp"
 #include "Image/manager.hpp"
 #include "data.hpp"

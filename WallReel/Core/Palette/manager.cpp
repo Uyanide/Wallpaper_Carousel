@@ -1,7 +1,5 @@
 #include "manager.hpp"
 
-#include <qcontainerfwd.h>
-
 #include "Palette/matchcolor.hpp"
 #include "Utils/misc.hpp"
 #include "logger.hpp"

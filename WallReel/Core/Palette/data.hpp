@@ -1,8 +1,6 @@
 #ifndef WALLREEL_PALETTE_DATA_HPP
 #define WALLREEL_PALETTE_DATA_HPP
 
-#include <qcolor.h>
-
 #include <QColor>
 #include <QList>
 #include <QObject>

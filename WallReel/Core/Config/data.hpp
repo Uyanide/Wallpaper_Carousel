@@ -1,8 +1,6 @@
 #ifndef WALLREEL_CONFIG_DATA_HPP
 #define WALLREEL_CONFIG_DATA_HPP
 
-#include <qtmetamacros.h>
-
 #include <QColor>
 #include <QHash>
 #include <QList>

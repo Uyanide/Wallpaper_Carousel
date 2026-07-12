@@ -1,5 +1,5 @@
-#ifndef WALLREEL_MISC_HPP
-#define WALLREEL_MISC_HPP
+#ifndef WALLREEL_UTILS_MISC_HPP
+#define WALLREEL_UTILS_MISC_HPP
 
 #include <QDir>
 #include <QFileInfo>
@@ -199,4 +199,4 @@ inline void printPath(const QString& path, std::FILE* out = stdout) {
 
 }  // namespace WallReel::Core::Utils
 
-#endif  // WALLREEL_MISC_HPP
+#endif  // WALLREEL_UTILS_MISC_HPP

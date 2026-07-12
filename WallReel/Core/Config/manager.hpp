@@ -1,5 +1,5 @@
-#ifndef WALLREEL_CONFIGMGR_HPP
-#define WALLREEL_CONFIGMGR_HPP
+#ifndef WALLREEL_CONFIG_MANAGER_HPP
+#define WALLREEL_CONFIG_MANAGER_HPP
 
 #include <QDir>
 
@@ -106,4 +106,4 @@ class Manager : public QObject {
 
 }  // namespace WallReel::Core::Config
 
-#endif  // WALLREEL_CONFIGMGR_HPP
+#endif  // WALLREEL_CONFIG_MANAGER_HPP

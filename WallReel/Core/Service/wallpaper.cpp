@@ -1,9 +1,5 @@
 #include "Service/wallpaper.hpp"
 
-#include <qprocess.h>
-
-#include <QColor>
-
 #include "logger.hpp"
 
 WALLREEL_DECLARE_SENDER("WallpaperService")
