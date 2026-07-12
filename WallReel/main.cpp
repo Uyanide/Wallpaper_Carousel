@@ -1,8 +1,8 @@
-#include <qobject.h>
-
 #include <QApplication>
+#include <QFileInfo>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickStyle>
 #include <QSocketNotifier>
 
 extern "C" {
@@ -20,6 +20,26 @@ extern "C" {
 using namespace WallReel::Core;
 
 WALLREEL_DECLARE_SENDER("Main")
+
+static QString pickControlsStyle(const QQmlApplicationEngine& engine) {
+    // Respect env
+    if (!qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE"))
+        return {};
+#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+    using namespace Qt::StringLiterals;
+    // Prefer KDE style if available,
+    for (const QString& p : engine.importPathList())
+        if (QFileInfo::exists(p + u"/org/kde/desktop/qmldir"_s))
+            return u"org.kde.desktop"_s;
+    // fallback to Fusion
+    return u"Fusion"_s;
+#else
+    for (const QString& p : engine.importPathList())
+        if (QFileInfo::exists(p + u"/org/kde/desktop/qmldir"_qs))
+            return u"org.kde.desktop"_qs;
+    return u"Fusion"_qs;
+#endif
+}
 
 int main(int argc, char* argv[]) {
     // Destruction order after QApplication quits its event loop:
@@ -46,12 +66,14 @@ int main(int argc, char* argv[]) {
     QApplication a(argc, argv);
     a.setApplicationName(APP_NAME);
     a.setApplicationVersion(APP_VERSION);
+    {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
-    using namespace Qt::StringLiterals;
-    a.setWindowIcon(QIcon(u":/icon.svg"_s));
+        using namespace Qt::StringLiterals;
+        a.setWindowIcon(QIcon(u":/icon.svg"_s));
 #else
-    a.setWindowIcon(QIcon(u":/%1.svg"_qs.arg(APP_NAME)));
+        a.setWindowIcon(QIcon(u":/icon.svg"_qs));
 #endif
+    }
 
     {
         Logger::init();
@@ -105,6 +127,10 @@ int main(int argc, char* argv[]) {
             {
                 QQmlApplicationEngine engine;
 
+                if (const QString s = pickControlsStyle(engine); !s.isEmpty()) {
+                    QQuickStyle::setStyle(s);
+                }
+
                 QObject::connect(
                     &engine,
                     &QQmlApplicationEngine::objectCreationFailed,
@@ -112,13 +138,15 @@ int main(int argc, char* argv[]) {
                     []() { QCoreApplication::exit(-1); },
                     Qt::QueuedConnection);
 
+                {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-                using namespace Qt::StringLiterals;
-                engine.loadFromModule(UIMODULE_URI, u"Main"_s);
+                    using namespace Qt::StringLiterals;
+                    engine.loadFromModule(UIMODULE_URI, u"Main"_s);
 #else
-                engine.addImportPath(u"qrc:/"_qs);
-                engine.load(QUrl(u"qrc:/WallReel/UI/Main.qml"_qs));
+                    engine.addImportPath(u"qrc:/"_qs);
+                    engine.load(QUrl(u"qrc:/WallReel/UI/Main.qml"_qs));
 #endif
+                }
 
                 bootstrap.start();
 
