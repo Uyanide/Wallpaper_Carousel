@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Tag Matches Project Version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          CMAKE_VERSION=$(sed -n 's/^project(WallReel VERSION \([0-9.]\+\).*/\1/p' CMakeLists.txt)
+          if [ "$TAG_VERSION" != "$CMAKE_VERSION" ]; then
+            echo "::error::Tag v${TAG_VERSION} does not match project(WallReel VERSION ${CMAKE_VERSION})"
+            exit 1
+          fi
+          echo "VERSION=${TAG_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Install Build Dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            cmake g++ jq qt6-base-dev qt6-declarative-dev
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -Wno-dev
+
+      - name: Build
+        run: cmake --build build --parallel "$(nproc)"
+
+      - name: Publish Release
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          API="${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}"
+          AUTH="Authorization: token ${TOKEN}"
+          NOTES=$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")
+
+          payload() {
+            jq -n --arg tag "$GITHUB_REF_NAME" \
+                  --arg name "WallReel ${VERSION}" \
+                  --arg body "$NOTES" \
+                  "$1"
+          }
+
+          code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' -X POST "$API/releases" \
+            -H "$AUTH" -H 'Content-Type: application/json' \
+            --data-binary "$(payload '{tag_name:$tag, name:$name, body:$body, draft:false, prerelease:false}')")
+
+          if [ "$code" = "409" ]; then
+            echo "Release for ${GITHUB_REF_NAME} already exists, updating in place."
+            id=$(curl -sS -H "$AUTH" "$API/releases/tags/${GITHUB_REF_NAME}" | jq -r '.id')
+            code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' -X PATCH "$API/releases/${id}" \
+              -H "$AUTH" -H 'Content-Type: application/json' \
+              --data-binary "$(payload '{name:$name, body:$body, draft:false, prerelease:false}')")
+          fi
+
+          case "$code" in
+            2*) echo "Release published (HTTP ${code})." ;;
+            *)  echo "::error::Gitea API returned HTTP ${code}"; cat /tmp/resp.json; exit 1 ;;
+          esac
